@@ -163,12 +163,16 @@ sist_med/                     # RAÍZ DEL PROYECTO
 - [ ] Notificaciones por email (pagos recibidos)
 - [ ] Recuperación de contraseña por email
 - [ ] Gráficos avanzados en Stats (charts)
-- [ ] Limpiar duplicados en frontend (hay carpetas duplicadas)
 - [ ] Docker Compose automatizado completo
 - [ ] CI/CD Pipeline
 - [ ] Producción (MongoDB Atlas, cloud hosting)
 - [ ] Modo oscuro funcional completo
 - [ ] Documentación API con Swagger mejorado
+
+### NOTA: Duplicados identificados (NO borrar - solo referência)
+- `frontend/src/services/api.ts`: Duplicado de `frontend/services/api.ts` (el correcto)
+- `frontend/App.tsx`: En raíz (no en src/)
+- SOLO referencia, NO eliminar hasta verificar que todo funciona
 
 ---
 
@@ -351,4 +355,6 @@ Contraseña: Medico123!
 ---
 
 *Última actualización: 2026-05-05*
-*Creado por: AI Assistant (Arquitecto de Software)*
+*Pruebas realizadas: Login, Get Me, Update Profile, Change Password, CRUD Actividades, Stats, Multi-tenant Isolation*
+*Todos los tests PASARON ✅*
+*Duplicados identificados (NO eliminar hasta verificar)*

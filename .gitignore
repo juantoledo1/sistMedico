@@ -72,4 +72,4 @@ npm-debug.log*
 *.db
 *.sqlite
 *.sqlite3
-mongod_data/
+mongod_data/frontend/node_modules/

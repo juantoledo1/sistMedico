@@ -1,0 +1,86 @@
+# MedFlow Pro - Docker Compose
+# Orchestration: MongoDB + Backend + Frontend
+version: '3.8'
+
+services:
+  # ==================== MONGODB ====================
+  mongodb:
+    image: mongo:7.0
+    container_name: medflow_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/mongo-seed:/docker-entrypoint-initdb.d:ro
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:-medflow2024}
+      MONGO_INITDB_DATABASE: medflow
+    env_file:
+      - .env
+    networks:
+      - medflow_net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==================== BACKEND API ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medflow_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      MONGO_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASS:-medflow2024}@mongodb:27017/medflow
+      SECRET_KEY: ${SECRET_KEY:-medflow-dev-secret-key-change-in-prod}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 15
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173"
+    env_file:
+      - .env
+    networks:
+      - medflow_net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # ==================== FRONTEND ====================
+  frontend:
+    image: node:20-alpine
+    container_name: medflow_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev -- --host 0.0.0.0
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    networks:
+      - medflow_net
+
+# Redes
+networks:
+  medflow_net:
+    driver: bridge
+
+# Volúmenes
+volumes:
+  mongodb_data:
+    driver: local

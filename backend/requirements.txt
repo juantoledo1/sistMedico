@@ -1,0 +1,38 @@
+# MedFlow Pro - Requirements
+# FastAPI + MongoDB (Motor) + Seguridad
+
+# FastAPI and Uvicorn
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# MongoDB (Motor - async driver)
+motor>=3.3.0
+pymongo>=4.6.0
+
+# Security - JWT + BCrypt
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt==4.0.1
+
+# Pydantic for validation
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+email-validator>=2.1.0
+
+# Rate Limiting
+slowapi>=0.1.9
+limits>=3.12.0
+
+# CORS
+starlette>=0.35.0
+
+# Utilities
+python-dotenv>=1.0.0
+pytz>=2024.1
+httpx>=0.26.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0

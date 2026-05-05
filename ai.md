@@ -1,6 +1,6 @@
 # AI.md - Fuente de Verdad para MedFlow Pro
 
-> **REGLA CRÍTICA**: Cada vez que hagas un cambio estructural, agregues una librería o completes una funcionalidad, DEBES ACTUALIZAR este archivo para que siempre esté alinhado.
+> **REGLA CRÍTICA**: Cada vez que hagas un cambio estructural, agregues una librería o completes una funcionalidad, DEBES ACTUALIZAR ESTE ARCHIVO para que siempre esté alineado.
 
 ---
 
@@ -154,25 +154,21 @@ sist_med/                     # RAÍZ DEL PROYECTO
 - [x] Docker containers (MongoDB + Backend)
 - [x] Git initialized with .gitignore
 
-### ❌ Pendiente (To Do)
+### ❌ Pendiente (To Do) - PRIORIDAD
 
-- [ ] **Rate Limiting** (slowapi en requirements pero NO implementado) - CRÍTICO
-- [ ] Refresh token rotation
-- [ ] Tests (backend: pytest, frontend: jest)
-- [ ] Exportar a PDF/Excel (para impuestos)
-- [ ] Notificaciones por email (pagos recibidos)
-- [ ] Recuperación de contraseña por email
-- [ ] Gráficos avanzados en Stats (charts)
-- [ ] Docker Compose automatizado completo
-- [ ] CI/CD Pipeline
-- [ ] Producción (MongoDB Atlas, cloud hosting)
-- [ ] Modo oscuro funcional completo
-- [ ] Documentación API con Swagger mejorado
+- [ ] **Rate Limiting** (slowapi en requirements pero NO implementado) - CRÍTICO para producción
+- [ ] HttpOnly Cookies para tokens (MEJORA seguridad)
+- [ ] Tests (backend: pytest)
+- [ ] Exportar a PDF/Excel (descarga manual)
 
-### NOTA: Duplicados identificados (NO borrar - solo referência)
+### ⛔ NO IMPLEMENTAR (Descartado - 2026-05-05)
+- ❌ Notificaciones por email (el usuario maneja TODO manualmente desde la app)
+- ❌ Envío automático de PDF por email
+- ❌ Recuperación de contraseña por email (prioridad baja)
+
+### NOTA: Duplicados identificados (NO eliminar hasta verificar)
 - `frontend/src/services/api.ts`: Duplicado de `frontend/services/api.ts` (el correcto)
 - `frontend/App.tsx`: En raíz (no en src/)
-- SOLO referencia, NO eliminar hasta verificar que todo funciona
 
 ---
 
@@ -333,7 +329,104 @@ PRÓXIMO:
 
 ---
 
-## 12. Errores Comunes y Soluciones
+## 12. i18n (Inglés/Español)
+
+### Archivo: `frontend/translations.ts`
+- **Español**: Idioma **PRINCIPAL** (defecto: `language: 'es'`)
+- **Inglés**: Secundario (`settings.language = 'en'`)
+- Uso: `const t = translations[settings.language];`
+
+### Idioma Principal:
+- ✅ Español es el defecto en `App.tsx` línea ~120
+- ✅ SettingsView permite cambiar a 'en'
+- ✅ Todas las vistas usan `t.label` para traducción
+- ✅ REGLA: Siempre español primero, inglés disponible
+
+### Cambio de Idioma:
+- Toggle en `SettingsView.tsx`
+- Persiste en `localStorage` → `settings.language`
+
+---
+
+## 13. Modo Oscuro (Dark Mode)
+
+### Estado: ✅ IMPLEMENTADO
+- Estado en `App.tsx`: `darkMode: false` (defecto claro)
+- Toggle en `SettingsView.tsx`
+- Uso de clase condicional:
+  ```tsx
+  className={cn(
+    "bg-white text-slate-900", 
+    settings.darkMode && "dark:bg-slate-900 dark:text-white"
+  )}
+  ```
+
+### Colores:
+- Claro: `bg-slate-50`, `text-slate-900`
+- Oscuro: `bg-slate-900`, `text-white`
+
+---
+
+## 14. Botón Salir (Logout)
+
+### Ubicación: `App.tsx` línea ~295 (sidebar)
+- Icono: `<LogOut />` (lucide-react)
+- Texto: "Salir" (es)
+- Acción: `handleLogout()` → limpia tokens y redirige a login
+
+### Función handleLogout:
+```typescript
+const handleLogout = () => {
+  api.logout();  // Limpia localStorage
+  setIsAuthenticated(false);
+  setTransactions([]);
+  setActiveView('login');
+};
+```
+
+---
+
+## 15. Seguridad de Tokens (CRÍTICO)
+
+### Método Actual: localStorage (⚠️ Seguridad Media)
+- Tokens almacenados en `localStorage`
+- Vulnerable a XSS (scripts maliciosos pueden leer)
+- Access token expira en 15 min
+
+### MEJORA RECOMENDADA: HttpOnly Cookies (🔵 Seguridad Máxima)
+- **Backend** (_fastapi_): 设置 cookies con `httponly=True`
+- **Frontend**: No necesita localStorage, el navegador envía cookies automáticamente
+- ✅ XSS no puede leer tokens
+- ✅ Más profesional, estándar de industria
+
+### Implementación Sugerida (pendiente):
+```python
+# Backend - FastAPI
+from fastapi.responses import Response
+
+@app.post("/api/auth/login")
+async def login(response: Response, ...):
+    # ... autenticación ...
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,   # ← ✅ JS no puede leer
+        secure=True,     # ← ✅ Solo HTTPS
+        samesite="lax",  # ← ✅ CSRF protection
+        max_age=900       # 15 min
+    )
+```
+
+### REGLA DE SEGURIDAD (NUNCA OLVIDAR):
+1. ✅ Tokens: localStorage (actual) → HttpOnly (pendiente)
+2. ✅ Contraseñas: BCrypt 12 rounds (✓ implementado)
+3. ✅ CORS: Solo orígenes permitidos (✓ implementado)
+4. ✅ Headers: X-Frame-Options, HSTS (✓ implementado)
+5. ✅ Multi-tenant: filtrado por userId (✓ implementado)
+
+---
+
+## 16. Errores Comunes y Soluciones
 
 | Error | Solución |
 |-------|---------|
@@ -357,4 +450,5 @@ Contraseña: Medico123!
 *Última actualización: 2026-05-05*
 *Pruebas realizadas: Login, Get Me, Update Profile, Change Password, CRUD Actividades, Stats, Multi-tenant Isolation*
 *Todos los tests PASARON ✅*
-*Duplicados identificados (NO eliminar hasta verificar)*
+*Actualizado con: i18n (es principal), Modo Oscuro, Botón Salir, Seguridad Tokens*
+*REGLA: Si modificás algo -> actualizá ESTE archivo*

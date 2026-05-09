@@ -30,11 +30,30 @@ async def get_current_user_id(credentials = Depends(security)) -> str:
     return payload.get("sub")
 
 
+async def verify_user_active(user_id: str, db: AsyncIOMotorDatabase = Depends(get_database)):
+    """Verificar que el usuario está activo (status = 'active')"""
+    from bson import ObjectId
+    try:
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+    except Exception:
+        user = await db.users.find_one({"_id": user_id})
+    
+    if not user:
+        raise HTTPException(status_code=403, detail="Usuario no encontrado")
+    
+    if user.get("is_deleted", False):
+        raise HTTPException(status_code=403, detail="Cuenta eliminada")
+    
+    if user.get("status", "active") != "active" or not user.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Cuenta suspendida - No puede realizar esta acción")
+
+
 @router.post("/", response_model=ActividadResponse, status_code=201)
 async def crear_actividad(
     actividad: ActividadCreate,
     user_id: str = Depends(get_current_user_id),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    _ = Depends(verify_user_active)
 ):
     """Crear nueva actividad - SIEMPRE asociada al userId del token"""
     
@@ -199,7 +218,8 @@ async def actualizar_actividad(
     actividad_id: str,
     data: ActividadUpdate,
     user_id: str = Depends(get_current_user_id),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    _ = Depends(verify_user_active)
 ):
     """Actualizar actividad - SOLO del propio médico"""
     from bson import ObjectId
@@ -224,7 +244,8 @@ async def actualizar_actividad(
 async def eliminar_actividad(
     actividad_id: str,
     user_id: str = Depends(get_current_user_id),
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    _ = Depends(verify_user_active)
 ):
     """Eliminar actividad - SOLO del propio médico"""
     from bson import ObjectId

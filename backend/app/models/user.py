@@ -15,12 +15,17 @@ class UserBase(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=100, description="Nombre completo")
     specialty: Optional[str] = Field(None, max_length=100, description="Especialidad médica")
     institution: Optional[str] = Field(None, max_length=200, description="Institución principal")
+    phone: Optional[str] = Field(None, max_length=20, description="Teléfono (solo admin)")
+    status: str = Field("inactive", description="Estado: active | inactive | suspended")
+    is_active: bool = True
+    is_deleted: bool = False  # Soft delete
 
 
 class UserCreate(UserBase):
     """Schema para crear usuario - CONTRASEÑA"""
     password: str = Field(..., min_length=8, max_length=50, description="Contraseña (mínimo 8 caracteres)")
     password_confirm: str = Field(..., description="Confirmar contraseña")
+    phone: Optional[str] = Field(None, max_length=20, description="Teléfono")
 
 
 class UserUpdate(BaseModel):
@@ -80,3 +85,25 @@ class ErrorResponse(BaseModel):
     error: str
     status_code: int
     detail: Optional[str] = None
+
+
+# ==================== ADMIN SCHEMAS ====================
+
+class UserListResponse(BaseModel):
+    """Respuesta para lista de usuarios (admin)"""
+    id: str
+    email: str
+    full_name: Optional[str] = None
+    specialty: Optional[str] = None
+    institution: Optional[str] = None
+    phone: Optional[str] = None
+    status: str = "inactive"
+    is_active: bool = True
+    is_admin: bool = False
+    is_deleted: bool = False
+    created_at: Optional[datetime] = None
+
+
+class ToggleActiveRequest(BaseModel):
+    """Request para activar/desactivar usuario"""
+    is_active: bool

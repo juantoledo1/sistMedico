@@ -46,7 +46,7 @@ export const translations = {
     mañana: "Mañana",
     ahora: "Ahora",
     entrada: "Entrada",
-    salida: "Salida",
+salida: "Salida",
     fechaFin: "Fecha de Finalización",
     registrar: "Registrar",
     estadoPago: "Estado del Pago",
@@ -60,8 +60,18 @@ export const translations = {
     imprimirPDF: "Imprimir PDF",
     cobrado: "Cobrado",
     pendiente: "Pendiente",
-   ResumenPorTipo: "Resumen por Tipo",
-    DetalleActividades: "Detalle de Actividades"
+    vsAnoPasado: "vs Mes Pasado",
+    sinActividadesRecientes: "Sin actividades recientes",
+    ResumenPorTipo: "Resumen por Tipo",
+    DetalleActividades: "Detalle de Actividades",
+    email: "Email",
+    contrasena: "Contraseña",
+    bienvenido: "Bienvenido",
+    iniciarSesion: "Inicia sesión para continuar",
+    noTienesCuenta: "¿No tienes cuenta?",
+    registrate: "Regístrate",
+    cargando: "Cargando...",
+    iniciarSesionBtn: "Iniciar Sesión"
   },
   en: {
     inicio: "Home",
@@ -123,8 +133,18 @@ export const translations = {
     imprimirPDF: "Print PDF",
     cobrado: "Paid",
     pendiente: "Pending",
+    vsAnoPasado: "vs Last Month",
+    sinActividadesRecientes: "No recent activities",
     ResumenPorTipo: "Summary by Type",
-    DetalleActividades: "Activity Details"
+    DetalleActividades: "Activity Details",
+    email: "Email",
+    contrasena: "Password",
+    bienvenido: "Welcome",
+    iniciarSesion: "Sign in to continue",
+    noTienesCuenta: "Don't have an account?",
+    registrate: "Sign up",
+    cargando: "Loading...",
+    iniciarSesionBtn: "Sign In"
   }
 };
 

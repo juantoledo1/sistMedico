@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { Transaction, PaymentStatus, UserSettings, Actividad, ActivityType } from '../types';
-import { MOCK_ACTIVIDADES } from '../services/mockData';
 import { 
   ArrowLeft, 
   PieChart, 
@@ -39,7 +38,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ transactions, settings
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('Todos');
   const [showPrintView, setShowPrintView] = useState(false);
   
-  const actividades = MOCK_ACTIVIDADES;
+  const actividades = transactions;
   
   const filteredActividades = useMemo(() => {
     let filtered = actividades;

@@ -15,19 +15,21 @@ Permite a los médicos registrar sus actividades laborales, calcular automática
 ## 2. Stack Tecnológico
 
 ### Frontend
-| Tecnología | Versión | Propósito |
-|-------------|---------|----------|
+| Tecnología | Puerto | Propósito |
+|-------------|--------|----------|
 | React | 19.x | UI Framework |
 | TypeScript | 5.x | Tipado estático |
-| Vite | 6.x | Build tool |
-| Tailwind CSS | 3.x | Estilos (via classes) |
+| Vite Dev Server | **5174** | Puerto desarrollo (5173 puede estar en uso) |
+| vite build | 5173 | Puerto producción |
+| Tailwind CSS | **LOCAL** | Estilos (NO CDN - vía @tailwindcss/vite) |
 | Lucide React | latest | Iconos |
 
 ### Backend
-| Tecnología | Versión | Propósito |
-|-------------|---------|----------|
-| FastAPI | 0.109+ | API Framework |
+| Tecnología | Puerto | Propósito |
+|-------------|--------|----------|
+| FastAPI | **8000** | API REST |
 | Python | 3.11 | Runtime |
+| MongoDB | **27017** | Base de datos |
 | MongoDB | latest | Base de datos |
 | Motor | 3.3+ | Driver async |
 | python-jose | 3.3+ | JWT tokens |
@@ -56,6 +58,15 @@ sist_med/                     # RAÍZ DEL PROYECTO
 │   │   ├── services/        # API calls (api.ts)
 │   │   └── (types.ts)       # ✦ MOVER A RAÍZ SI ESTÁ DUPLICADO ✦
 │   ├── components/          # Componentes UI (Dashboard, Forms, etc.)
+│   │   ├── LoginView.tsx   # Login extraído (refactorizado 2026-05-05)
+│   │   ├── LoadingView.tsx # Loading screen extraído (refactorizado 2026-05-05)
+│   │   ├── Dashboard.tsx
+│   │   ├── StatsView.tsx
+│   │   ├── ReportsView.tsx
+│   │   └── ...
+│   ├── public/             # Archivos estáticos (imágenes,avatars)
+│   │   ├── login-bg.webp  # Imagen de fondo login
+│   │   └── avatars/      # Avatars de doctores
 │   ├── services/           # ✦ DUPLICADO - usar src/services ✦
 │   ├── lib/               # Utilidades (utils.ts)
 │   ├── App.tsx            # ✦ COMPONENTE PRINCIPAL ✦
@@ -185,7 +196,11 @@ sist_med/                     # RAÍZ DEL PROYECTO
   "full_name": "string",
   "specialty": "string",
   "institution": "string",
+  "phone": "string (optional)",
+  "status": "active | inactive | suspended | deleted",
   "is_active": "boolean",
+  "is_admin": "boolean",
+  "is_deleted": "boolean (soft delete)",
   "created_at": "datetime",
   "updated_at": "datetime"
 }
@@ -300,6 +315,12 @@ npm run dev
 - CORS estricto (solo orígenes en whitelist)
 - Multi-tenant: Todas las queries filtradas por `userId`
 - Validación con Pydantic
+- Sistema de estados: `active`, `inactive`, `suspended`, `deleted`
+- Login/Refresh/Me verifican `is_deleted` + `status` 
+- Actividades writes bloqueados si usuario no está `active`
+- Inactivos NO pueden login ni obtener tokens
+- Eliminados bloqueados en todos los endpoints
+- Suspendidos pueden login/ver datos pero NO crear/editar/eliminar actividades
 
 ### Pendiente ❌
 - Rate Limiting (slowapi instalado pero NO usado)
@@ -438,7 +459,102 @@ async def login(response: Response, ...):
 
 ---
 
-## 13. Credenciales de Prueba (Desarrollo)
+## 17. Tailwind CSS (CONFIGURACIÓN LOCAL)
+
+### Estado: ✅ IMPLEMENTADO (2026-05-05)
+- Tailwind configurado LOCALMENTE (NO usa CDN)
+- Dependencias: `tailwindcss`, `@tailwindcss/vite`
+
+### Archivos de Configuración:
+- `frontend/vite.config.ts`: Plugin `@tailwindcss/vite()`
+- `frontend/src/index.css`: `@import "tailwindcss";`
+- NO hay `tailwind.config.js` (usa valores por defecto)
+
+### Cambios Realizados:
+- ✅ Eliminado `<script src="https://cdn.tailwindcss.com"></script>` de `index.html`
+- ✅ Instalado `npm install -D tailwindcss @tailwindcss/vite`
+- ✅ Agregado plugin en `vite.config.ts`
+- ✅ Creado `src/index.css` con directivas
+- ✅ Importado en `index.tsx`
+
+### Beneficios:
+- Build optimizado (purgue de clases no usadas)
+- Funciona offline
+- Configuración personalizable
+- Mejor para producción
+
+---
+
+## 18. Estructura de Componentes (Clean Code)
+
+### Principio: Separación de Responsabilidades
+- `App.tsx`: Solo routing y estado global
+- `LoginView.tsx`: UI de login (extraído)
+- `LoadingView.tsx`: UI de carga (extraído)
+- `Dashboard.tsx`: Vista principal
+- `StatsView.tsx`: Estadísticas
+- `ReportsView.tsx`: Reportes
+
+### Login Flow Actual:
+1. `App.tsx` → Verifica `isAuthenticated`
+2. Si no autenticado → `<LoginView onLogin={handleLogin} ... />`
+3. `LoginView` → Maneja formulario，输入 credenciales
+4. `handleLogin` (en App.tsx) → Llama `api.login()`
+5. Éxito → `setIsAuthenticated(true)` → Muestra dashboard
+
+---
+
+## 19. Traducciones del Login (i18n)
+
+### Keys Agregadas (2026-05-05):
+```typescript
+// translations.ts
+es: {
+  email: "Email",
+  contrasena: "Contraseña",
+  bienvenido: "Bienvenido",
+  iniciarSesion: "Inicia sesión para continuar",
+  noTienesCuenta: "¿No tienes cuenta?",
+  registrate: "Regístrate",
+  cargando: "Cargando...",
+  iniciarSesionBtn: "Iniciar Sesión"
+},
+en: {
+  email: "Email",
+  contrasena: "Password",
+  bienvenido: "Welcome",
+  iniciarSesion: "Sign in to continue",
+  noTienesCuenta: "Don't have an account?",
+  registrate: "Sign up",
+  cargando: "Loading...",
+  iniciarSesionBtn: "Sign In"
+}
+```
+
+---
+
+## 20. Fondo de Login (ImagenLocal)
+
+### Ubicación: `frontend/public/login-bg.webp`
+- Imagen copiada desde build anterior
+- Referenciada en `LoginView.tsx`:
+  ```tsx
+  style={{ backgroundImage: 'url(/login-bg.webp)' }}
+  ```
+
+### Efecto Visual:
+- `bg-cover bg-center` → Imagen centrada y cubren
+- `bg-slate-900/60 backdrop-blur-sm` → Overlay difuminado (60% opacidad, blur pequeño)
+- `bg-white/95 backdrop-blur-md` → Tarjeta semitransparente (95% blanco)
+
+### Para Modificar Difuminado/Transparencia:
+- línea ~239 en `LoginView.tsx`: `bg-slate-900/60 backdrop-blur-sm`
+  - Cambiar `/60` a `/40` (más claro) o `/80` (más oscuro)
+  - Cambiar `backdrop-blur-sm` a `md`, `lg`, `xl`
+
+---
+
+## 21. Credenciales de Prueba (Desarrollo)
 
 ```
 Email: drrodriguez@test.com
@@ -447,8 +563,120 @@ Contraseña: Medico123!
 
 ---
 
-*Última actualización: 2026-05-05*
-*Pruebas realizadas: Login, Get Me, Update Profile, Change Password, CRUD Actividades, Stats, Multi-tenant Isolation*
+## 22. Panel de Administración (2026-05-06)
+
+### ✅ Implementado
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register-admin?secret=...` | ❌ | Crear usuario admin |
+| GET | `/api/auth/admin/users` | ✅ Admin | Listar todos usuarios |
+| GET | `/api/auth/admin/users-with-debts` | ✅ Admin | Usuarios con deudas |
+| PUT | `/api/auth/admin/users/{id}/toggle-active` | ✅ Admin | Suspender/Activar cuenta |
+
+### Frontend
+- `components/AdminView.tsx`: Panel con tabla de médicos para gestión de usuarios
+- App.tsx: Navegación condicional por rol de usuario:
+  - **Admin**: Solo ve botones "Admin" (gestión usuarios) y "Perfil" (configuración)
+  - **Médico**: Ve botones "Inicio", "Reportes", "Estadísticas", "Finanzas" y "Perfil" (NO ve Admin)
+- Flujo de login basado en rol:
+  - **Admin**: Login → Redirección directa a vista Admin (gestión usuarios)
+  - **Médico**: Login → Redirección a vista Inicio (dashboard)
+
+### Modelo Usuario (Actualizado)
+```json
+{
+  "_id": "ObjectId",
+  "email": "string",
+  "password_hash": "string (bcrypt)",
+  "full_name": "string",
+  "specialty": "string",
+  "institution": "string",
+  "phone": "string (optional)",
+  "status": "string (active | inactive | suspended | deleted)",
+  "is_active": "boolean (default true)",
+  "is_admin": "boolean (default false)",
+  "is_deleted": "boolean (default false, soft delete)",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### Seguridad Admin
+- Endpoints solo accesibles para usuarios con `is_admin: true`
+- Login/Refresh/Me verifican `is_deleted` + `status`
+- Actividades writes (POST/PUT/DELETE) verifican `status == "active"` vía `verify_user_active()`
+- Login devuelve: "inactivo" si `status: inactive`, "suspendida" si `is_active: false`, "eliminada" si `is_deleted: true`
+- Refresh token rechaza si usuario está `inactive` o `deleted`
+- GET /me rechaza si usuario está `inactive` o `deleted`
+- Registro nuevo médico → `status: "inactive"` (pendiente activación admin), NO genera token
+- Admin puede: activar, suspender, eliminar usuarios desde panel
+- Soft delete conserva datos para auditoría (no borra registros)
+
+### Gestión de Secretos
+- **NUNCA hardcodear secretos** en el código fuente
+- **Variables de entorno** (`.env`) para: `MONGO_URI`, `SECRET_KEY`, `ADMIN_CREATION_SECRET`
+- **`.env.example`** como plantilla con valores placeholder
+- **`.gitignore`** excluye `.env`, `.env.*.local`, `*.pem`, `*.key`, `credentials.json`
+- **Frontend `.gitignore`** actualizado con `.env` y patrones de seguridad
+
+### Credenciales Admin
+```
+Email: admin@medflow.com
+Contraseña: Admin1234
+Secreto para crear admin: medflow-admin-2026
+```
+
+---
+
+## 23. Lógica de Suscripción SaaS (Modelo de Negocio)
+
+### Estados de Usuario
+
+| Estado | `status` | `is_active` | `is_deleted` | Login | Ver datos | Crear/Editar/Eliminar |
+|--------|----------|-------------|-------------|-------|-----------|-----------------------|
+| **Activo** | `"active"` | `true` | `false` | ✅ | ✅ | ✅ |
+| **Inactivo** (pendiente activación) | `"inactive"` | `false` | `false` | ❌ | ❌ | ❌ |
+| **Suspendido** (no pagó) | `"suspended"` | `false` | `false` | ✅ | ✅ | ❌ |
+| **Eliminado** (abandono) | `"deleted"` | `false` | `true` | ❌ | ❌ | ❌ |
+
+### Flujo de Ciclo de Vida
+
+```
+Registro → Inactivo (espera activación admin)
+    ↓ (admin activa)
+Activo → puede crear actividades, ver datos, etc.
+    ↓ (no paga - admin suspende)
+Suspendido → puede login, ver datos, NO puede crear/editar/eliminar
+    ↓ (paga - admin reactiva)
+Activo → vuelve a todo
+    ↓ (abandona - admin elimina)
+Eliminado → acceso denegado a todo, datos conservados para auditoría
+```
+
+### Verificaciones en Código
+
+| Endpoint | Verifica `is_deleted` | Verifica `status` | Dependencia | Respuesta si bloqueado |
+|----------|----------------------|-------------------|-------------|------------------------|
+| `POST /api/auth/login` | ✅ | ✅ | `authenticate_user()` + inline checks | "Cuenta eliminada" / "Cuenta pendiente de activación" |
+| `POST /api/auth/register` | N/A | N/A | `create_user(status="inactive")` | Registro OK, status="inactive" |
+| `POST /api/auth/refresh` | ✅ | ✅ | Inline checks | "Cuenta eliminada" / "Cuenta pendiente" |
+| `GET /api/auth/me` | ✅ | ✅ | Inline checks | "Cuenta eliminada" / "Cuenta pendiente" |
+| `GET /api/actividades` | ❌ | ❌ | Solo verifica token (lectura permitida) | N/A |
+| `POST/PUT/DELETE /api/actividades/*` | ✅ | ✅ | `verify_user_active()` | "Cuenta suspendida - No puede realizar esta acción" |
+
+### Admin - Gestión de Estados
+
+| Acción | Endpoint | Cambio en DB |
+|--------|----------|-------------|
+| Activar usuario | `PUT /admin/users/{id}` con `status: "active"` | `status: "active"`, `is_active: true` |
+| Suspender usuario | `PUT /admin/users/{id}` con `status: "suspended"` | `status: "suspended"`, `is_active: false` |
+| Toggle activo/suspendido | `PUT /admin/users/{id}/toggle-active` con `is_active: bool` | Sincroniza `status` automáticamente |
+| Soft delete | `DELETE /admin/users/{id}` | `status: "deleted"`, `is_deleted: true`, `is_active: false` |
+
+---
+
+*Última actualización: 2026-05-09*
+*Pruebas realizadas: Login Admin, Listar Usuarios, Toggle Active, Login Bloqueado, Crear Admin, Estados Suscripción*
 *Todos los tests PASARON ✅*
-*Actualizado con: i18n (es principal), Modo Oscuro, Botón Salir, Seguridad Tokens*
-*REGLA: Si modificás algo -> actualizá ESTE archivo*
+*Completado: Panel Admin con gestión de usuarios, control de acceso y lógica SaaS de suscripción*

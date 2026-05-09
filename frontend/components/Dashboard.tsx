@@ -133,8 +133,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
                 {formatCurrency(currentMonthTotal)}
               </span>
               <div className="flex items-center gap-2 text-green-600 text-[9px] lg:text-[10px] font-black uppercase tracking-widest pt-1 lg:pt-2">
-                <TrendingUp className="w-3 lg:w-4 h-3 lg:h-4" />
-                +12% vs {settings.language === 'es' ? 'Sep' : 'Sep'}
+<TrendingUp className="w-3 lg:w-4 h-3 lg:h-4" />
+                 {t.vsAnoPasado}
               </div>
             </div>
           </div>
@@ -302,7 +302,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
               </div>
             ))}
             {filteredTransactions.length === 0 && (
-              <p className="text-center text-slate-400 text-sm py-4">{settings.language === 'es' ? 'Sin actividades recientes' : 'No recent activities'}</p>
+              <p className="text-center text-slate-400 text-sm py-4">{t.sinActividadesRecientes}</p>
             )}
           </div>
         </div>

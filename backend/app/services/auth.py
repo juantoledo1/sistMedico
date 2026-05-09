@@ -109,18 +109,17 @@ async def authenticate_user(email: str, password: str, db) -> Optional[dict]:
         # Verificar contraseña
         if not verify_password(password, user.get("password_hash", "")):
             return None
-            
-        # Verificar si está activo
-        if not user.get("is_active", True):
-            return None
-            
-        # Retornar datos del usuario (sin hash)
+        
+        # Retornar datos del usuario (sin hash) + estado
         return {
             "id": str(user["_id"]),
             "email": user["email"],
             "full_name": user.get("full_name", ""),
             "specialty": user.get("specialty"),
-            "institution": user.get("institution")
+            "institution": user.get("institution"),
+            "status": user.get("status", "active"),
+            "is_active": user.get("is_active", True),
+            "is_deleted": user.get("is_deleted", False)
         }
         
     except Exception as e:
@@ -128,7 +127,7 @@ async def authenticate_user(email: str, password: str, db) -> Optional[dict]:
         return None
 
 
-async def create_user(email: str, password: str, full_name: str, db, specialty: str = None, institution: str = None) -> Optional[dict]:
+async def create_user(email: str, password: str, full_name: str, db, specialty: str = None, institution: str = None, phone: str = None, is_admin: bool = False) -> Optional[dict]:
     """
     Crear nuevo usuario
     """
@@ -142,13 +141,19 @@ async def create_user(email: str, password: str, full_name: str, db, specialty: 
         password_hash = hash_password(password)
         
         # Crear usuario
+        is_active = is_admin
+        user_status = "active" if is_admin else "inactive"
         user_doc = {
             "email": email,
             "password_hash": password_hash,
             "full_name": full_name,
             "specialty": specialty,
             "institution": institution,
-            "is_active": True,
+            "phone": phone,
+            "status": user_status,
+            "is_active": is_active,
+            "is_admin": is_admin,
+            "is_deleted": False,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }

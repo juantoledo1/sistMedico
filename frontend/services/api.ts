@@ -22,18 +22,34 @@ class APIService {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      method: options.method || 'GET',
-      headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    });
+    const url = `${API_BASE}${endpoint}`;
+    console.log(`[API] ${options.method || 'GET'} ${url}`);
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-      throw new Error(error.detail || error.message || 'Error en la solicitud');
+    try {
+      const response = await fetch(url, {
+        method: options.method || 'GET',
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type') || '';
+        console.log(`[API] Error ${response.status}:`, contentType);
+        
+        if (contentType.includes('application/json')) {
+          const error = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+          throw new Error(error.detail || error.message || `Error ${response.status}`);
+        } else {
+          const text = await response.text().catch(() => 'Error desconocido');
+          throw new Error(text || `Error ${response.status}`);
+        }
+      }
+
+      return response.json();
+    } catch (err) {
+      console.error(`[API] Error en ${endpoint}:`, err);
+      throw err;
     }
-
-    return response.json();
   }
 
   // ==================== AUTH ====================
@@ -56,6 +72,7 @@ class APIService {
     full_name: string;
     specialty?: string;
     institution?: string;
+    phone?: string;
   }) {
     const data = await this.request<any>('/api/auth/register', {
       method: 'POST',
@@ -134,6 +151,22 @@ class APIService {
 
   async getStats() {
     return this.request<any>('/api/actividades/stats');
+  }
+
+  // ==================== ADMIN ====================
+  async getAllUsers() {
+    return this.request<any[]>('/api/auth/admin/users');
+  }
+
+  async getUsersWithDebts() {
+    return this.request<any[]>('/api/auth/admin/users-with-debts');
+  }
+
+  async toggleUserActive(userId: string, isActive: boolean) {
+    return this.request<any>(`/api/auth/admin/users/${userId}/toggle-active`, {
+      method: 'PUT',
+      body: { is_active: isActive },
+    });
   }
 }
 

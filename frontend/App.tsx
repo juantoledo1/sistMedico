@@ -10,19 +10,18 @@ import {
 import { api } from "./services/api";
 import { GeminiService } from "./services/gemini";
 import { Dashboard } from "./components/Dashboard";
-import { IncomeHistory } from "./components/IncomeHistory";
 import { ShiftForm } from "./components/ShiftForm";
 import { SettingsView } from "./components/SettingsView";
 import { CalendarView } from "./components/CalendarView";
 import { ReportsView } from "./components/ReportsView";
 import { StatsView } from "./components/StatsView";
 import { LoginView } from "./components/LoginView";
+import { RegisterView } from "./components/RegisterView";
 import { LoadingView } from "./components/LoadingView";
 import { AdminView } from "./components/AdminView";
 import {
   LayoutGrid,
   Calendar,
-  Wallet,
   Settings,
   Plus,
   Bell,
@@ -42,12 +41,12 @@ import { translations } from "./translations";
 type ViewState =
   | "inicio"
   | "turnos"
-  | "finanzas"
   | "perfil"
   | "reportes"
   | "stats"
   | "admin"
-  | "login";
+  | "login"
+  | "registro";
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewState>("inicio");
@@ -79,6 +78,8 @@ const App: React.FC = () => {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [loginError, setLoginError] = useState<string>("");
+  const [registerError, setRegisterError] = useState<string>("");
+  const [registerSuccess, setRegisterSuccess] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -176,6 +177,33 @@ const App: React.FC = () => {
       setLoginError(
         error instanceof Error ? error.message : "Error al iniciar sesión",
       );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (data: {
+    email: string;
+    password: string;
+    password_confirm: string;
+    full_name: string;
+    specialty?: string;
+    institution?: string;
+    phone?: string;
+  }) => {
+    setRegisterError("");
+    setIsLoading(true);
+    setRegisterSuccess(false);
+    try {
+      await api.register(data);
+      setRegisterSuccess(true);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Error al registrarse";
+      if (msg.includes("429") || msg.includes("Too Many Requests") || msg.includes("Rate limit")) {
+        setRegisterError("Demasiados intentos. Esperá un minuto e intentá de nuevo.");
+      } else {
+        setRegisterError(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -327,12 +355,25 @@ const App: React.FC = () => {
 const t = translations[settings.language];
 
   if (!isAuthenticated) {
+    if (activeView === "registro") {
+      return (
+        <RegisterView
+          onRegister={handleRegister}
+          onBackToLogin={() => { setActiveView("login"); setRegisterError(""); setRegisterSuccess(false); }}
+          error={registerError}
+          isLoading={isLoading}
+          settings={settings}
+          successMessage={registerSuccess ? "ok" : undefined}
+        />
+      );
+    }
     return (
       <LoginView 
         onLogin={handleLogin} 
         loginError={loginError}
         isLoading={isLoading}
         settings={settings}
+        onNavigateToRegister={() => setActiveView("registro")}
       />
     );
   }
@@ -398,12 +439,6 @@ if (isLoading) {
               icon={<BarChart3 className="w-5 h-5" />}
             />
             <NavButton
-              active={activeView === "finanzas"}
-              onClick={() => setActiveView("finanzas")}
-              label={t.finanzas}
-              icon={<Wallet className="w-5 h-5" />}
-            />
-            <NavButton
               active={activeView === "perfil"}
               onClick={() => setActiveView("perfil")}
               label={t.ajustes}
@@ -450,6 +485,10 @@ if (isLoading) {
               transactions={transactions}
               settings={settings}
               onBack={() => setActiveView("inicio")}
+              onOpenForm={() => openForm()}
+              onEdit={(tx) => openForm(undefined, tx)}
+              onDelete={handleDeleteTransaction}
+              onUpdate={handleUpdateTransaction}
             />
           )}
           {activeView === "stats" && (
@@ -466,20 +505,11 @@ if (isLoading) {
               settings={settings}
             />
           )}
-          {activeView === "finanzas" && (
-            <IncomeHistory
-              transactions={transactions}
-              onOpenForm={() => openForm()}
-              onEdit={(tx) => openForm(undefined, tx)}
-              onDelete={handleDeleteTransaction}
-              onUpdate={handleUpdateTransaction}
-              settings={settings}
-            />
-          )}
           {activeView === "perfil" && (
             <SettingsView
               profile={profile}
               settings={settings}
+              isAdmin={isAdmin}
               onUpdateProfile={(p) => setProfile({ ...profile, ...p })}
               onUpdateSettings={(s) => setSettings({ ...settings, ...s })}
               onDeleteFavorite={(inst) =>
@@ -497,7 +527,7 @@ if (isLoading) {
         </div>
 
         {/* Mobile Quick Add Buttons */}
-        {["inicio", "turnos", "finanzas"].includes(activeView) && (
+        {["inicio", "turnos"].includes(activeView) && (
           <div className="lg:hidden fixed bottom-28 right-6 z-40 flex gap-2">
             <button
               onClick={() => openForm(undefined, undefined, "procedimiento")}
@@ -536,12 +566,6 @@ if (isLoading) {
               onClick={() => setActiveView("turnos")}
               label={t.turnos}
               icon={<Calendar className="w-5 h-5" />}
-            />
-            <MobileTab
-              active={activeView === "finanzas"}
-              onClick={() => setActiveView("finanzas")}
-              label={t.finanzas}
-              icon={<Wallet className="w-5 h-5" />}
             />
             <MobileTab
               active={activeView === "perfil"}

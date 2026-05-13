@@ -9,8 +9,12 @@ from contextlib import asynccontextmanager
 import time
 import logging
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
 from app.config import settings
 from app.db.mongo import connect, disconnect
+from app.limiter import limiter
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -49,6 +53,12 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Authorization", "Content-Type", "Accept"],
 )
+
+
+# ==================== RATE LIMITING ====================
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ==================== MIDDLEWARE DE SEGURIDAD ====================

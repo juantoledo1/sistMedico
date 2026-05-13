@@ -2,7 +2,7 @@
 Rutas de Autenticación - Register, Login, Refresh Token
 Con seguridad máxima multi-tenant
 """
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -11,6 +11,7 @@ from datetime import datetime
 import logging
 
 from app.config import settings
+from app.limiter import limiter
 from app.models.user import (
     UserCreate, UserResponse, LoginRequest, 
     TokenResponse, MessageResponse, ErrorResponse, UserListResponse, ToggleActiveRequest
@@ -105,8 +106,9 @@ async def get_current_user_admin(
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: AsyncIOMotorDatabase = Depends(get_database)):
-    """Registrar nuevo médico - queda pendiente de activación por admin"""
+@limiter.limit("3/minute")
+async def register(request: Request, user_data: UserCreate, db: AsyncIOMotorDatabase = Depends(get_database)):
+    """Registrar nuevo médico - auto-activación inmediata"""
     # Validar fortaleza de contraseña
     is_valid, msg = validate_password_strength(user_data.password)
     if not is_valid:
@@ -139,12 +141,13 @@ async def register(user_data: UserCreate, db: AsyncIOMotorDatabase = Depends(get
         raise HTTPException(status_code=500, detail="Error al crear usuario")
     
     return MessageResponse(
-        message="Registro exitoso. Su cuenta está pendiente de activación por el administrador."
+        message="Registro exitoso. Su cuenta ha sido activada automáticamente."
     )
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: LoginRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
+@limiter.limit("5/minute")
+async def login(request: Request, credentials: LoginRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
     """Login de médico - retorna JWT"""
     # Autenticar
     user = await authenticate_user(credentials.email, credentials.password, db)
@@ -166,6 +169,12 @@ async def login(credentials: LoginRequest, db: AsyncIOMotorDatabase = Depends(ge
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cuenta pendiente de activación. Contacte administración."
+        )
+    
+    if user_status == "suspended":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cuenta suspendida por falta de pago. Contacte administración."
         )
     
     if not user.get("is_active", True):

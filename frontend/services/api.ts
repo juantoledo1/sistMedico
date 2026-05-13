@@ -38,7 +38,7 @@ class APIService {
         
         if (contentType.includes('application/json')) {
           const error = await response.json().catch(() => ({ detail: 'Error desconocido' }));
-          throw new Error(error.detail || error.message || `Error ${response.status}`);
+          throw new Error(error.detail || error.error || error.message || `Error ${response.status}`);
         } else {
           const text = await response.text().catch(() => 'Error desconocido');
           throw new Error(text || `Error ${response.status}`);
@@ -166,6 +166,19 @@ class APIService {
     return this.request<any>(`/api/auth/admin/users/${userId}/toggle-active`, {
       method: 'PUT',
       body: { is_active: isActive },
+    });
+  }
+
+  async deleteUser(userId: string) {
+    return this.request<any>(`/api/auth/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateUser(userId: string, data: any) {
+    return this.request<any>(`/api/auth/admin/users/${userId}`, {
+      method: 'PUT',
+      body: data,
     });
   }
 }

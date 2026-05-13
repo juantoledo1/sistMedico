@@ -35,7 +35,7 @@ Permite a los médicos registrar sus actividades laborales, calcular automática
 | python-jose | 3.3+ | JWT tokens |
 | passlib + bcrypt | 4.0.1 | Hash de contraseñas |
 | Pydantic | 2.5+ | Validación de datos |
-| slowapi | 0.1.9 | Rate limiting (PENDIENTE implementar) |
+| slowapi | 0.1.9 | Rate limiting (3/min register, 5/min login) |
 
 ### Infraestructura
 | Tecnología | Propósito |
@@ -167,7 +167,7 @@ sist_med/                     # RAÍZ DEL PROYECTO
 
 ### ❌ Pendiente (To Do) - PRIORIDAD
 
-- [ ] **Rate Limiting** (slowapi en requirements pero NO implementado) - CRÍTICO para producción
+- [x] **Rate Limiting** (slowapi: 3 intentos/minuto register, 5/minuto login)
 - [ ] HttpOnly Cookies para tokens (MEJORA seguridad)
 - [ ] Tests (backend: pytest)
 - [ ] Exportar a PDF/Excel (descarga manual)
@@ -323,7 +323,6 @@ npm run dev
 - Suspendidos pueden login/ver datos pero NO crear/editar/eliminar actividades
 
 ### Pendiente ❌
-- Rate Limiting (slowapi instalado pero NO usado)
 - Refresh Token Rotation
 
 ---
@@ -342,7 +341,6 @@ npm run dev
 [████████░░░░░░] 95% - Clean code + estructura
 
 PRÓXIMO:
-[ ] Rate Limiting (CRÍTICO)
 [ ] Tests
 [ ] Limpiar código
 [ ] Producción
@@ -494,6 +492,7 @@ async def login(response: Response, ...):
 - `Dashboard.tsx`: Vista principal
 - `StatsView.tsx`: Estadísticas
 - `ReportsView.tsx`: Reportes
+- `RegisterView.tsx`: Registro de usuarios
 
 ### Login Flow Actual:
 1. `App.tsx` → Verifica `isAuthenticated`
@@ -533,7 +532,65 @@ en: {
 
 ---
 
-## 20. Fondo de Login (ImagenLocal)
+## 20. Traducciones de Registro (i18n)
+
+### Keys Agregadas (2026-05-13):
+```typescript
+// translations.ts
+es: {
+  crearCuenta: "Crear Cuenta",
+  registroTitulo: "Registro de Médico",
+  registroDesc: "Complete sus datos para registrarse",
+  nombreCompleto: "Nombre Completo",
+  ingresarNombre: "Ingrese su nombre completo",
+  confirmarContrasena: "Confirmar Contraseña",
+  confirmarPassword: "Confirme su contraseña",
+  registrarse: "Registrarse",
+  yaTienesCuenta: "¿Ya tienes cuenta?",
+  iniciarSesion: "Inicia sesión",
+  passwordRequirements: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número",
+  registroExitoso: "Registro exitoso",
+  registroExitosoMsg: "Su cuenta ha sido creada exitosamente. Ahora puede iniciar sesión.",
+  errorRegistro: "Error al registrarse",
+  errorCrearCuenta: "Error al crear la cuenta",
+  requisitosPassword: "Requisitos de contraseña",
+  especialidad: "Especialidad",
+  institucion: "Institución",
+  telefono: "Teléfono",
+  passwordStrength: "Fortaleza de contraseña",
+  debil: "Débil",
+  media: "Media",
+  fuerte: "Fuerte",
+},
+en: {
+  crearCuenta: "Create Account",
+  registroTitulo: "Doctor Registration",
+  registroDesc: "Fill in your details to register",
+  nombreCompleto: "Full Name",
+  ingresarNombre: "Enter your full name",
+  confirmarContrasena: "Confirm Password",
+  confirmarPassword: "Confirm your password",
+  registrarse: "Register",
+  yaTienesCuenta: "Already have an account?",
+  passwordRequirements: "Password must have at least 8 characters, one uppercase, one lowercase and one number",
+  registroExitoso: "Registration Successful",
+  registroExitosoMsg: "Your account has been created successfully. You can now log in.",
+  errorRegistro: "Registration Error",
+  errorCrearCuenta: "Error creating account",
+  requisitosPassword: "Password Requirements",
+  especialidad: "Specialty",
+  institucion: "Institution",
+  telefono: "Phone",
+  passwordStrength: "Password Strength",
+  debil: "Weak",
+  media: "Medium",
+  fuerte: "Strong",
+}
+```
+
+---
+
+## 21. Fondo de Login (ImagenLocal)
 
 ### Ubicación: `frontend/public/login-bg.webp`
 - Imagen copiada desde build anterior
@@ -554,16 +611,22 @@ en: {
 
 ---
 
-## 21. Credenciales de Prueba (Desarrollo)
+## 22. Credenciales de Prueba (Desarrollo)
 
 ```
 Email: drrodriguez@test.com
+Contraseña: Medico123!
+
+Email: dra.perez@test.com
+Contraseña: Medico123!
+
+Email: dratest@test.com
 Contraseña: Medico123!
 ```
 
 ---
 
-## 22. Panel de Administración (2026-05-06)
+## 23. Panel de Administración (2026-05-06)
 
 ### ✅ Implementado
 
@@ -609,7 +672,7 @@ Contraseña: Medico123!
 - Login devuelve: "inactivo" si `status: inactive`, "suspendida" si `is_active: false`, "eliminada" si `is_deleted: true`
 - Refresh token rechaza si usuario está `inactive` o `deleted`
 - GET /me rechaza si usuario está `inactive` o `deleted`
-- Registro nuevo médico → `status: "inactive"` (pendiente activación admin), NO genera token
+- Registro nuevo médico → `status: "active"`, `is_active: true` (auto-activación inmediata)
 - Admin puede: activar, suspender, eliminar usuarios desde panel
 - Soft delete conserva datos para auditoría (no borra registros)
 
@@ -627,25 +690,36 @@ Contraseña: Admin1234
 Secreto para crear admin: medflow-admin-2026
 ```
 
+### Credenciales Médicos (prueba)
+```
+Email: drrodriguez@test.com
+Contraseña: Medico123!
+
+Email: dra.perez@test.com
+Contraseña: Medico123!
+
+Email: dratest@test.com
+Contraseña: Medico123!
+```
+
 ---
 
-## 23. Lógica de Suscripción SaaS (Modelo de Negocio)
+## 24. Lógica de Suscripción SaaS (Modelo de Negocio)
 
 ### Estados de Usuario
 
 | Estado | `status` | `is_active` | `is_deleted` | Login | Ver datos | Crear/Editar/Eliminar |
 |--------|----------|-------------|-------------|-------|-----------|-----------------------|
 | **Activo** | `"active"` | `true` | `false` | ✅ | ✅ | ✅ |
-| **Inactivo** (pendiente activación) | `"inactive"` | `false` | `false` | ❌ | ❌ | ❌ |
+| **Inactivo** (pausado por admin) | `"inactive"` | `false` | `false` | ❌ | ❌ | ❌ |
 | **Suspendido** (no pagó) | `"suspended"` | `false` | `false` | ✅ | ✅ | ❌ |
 | **Eliminado** (abandono) | `"deleted"` | `false` | `true` | ❌ | ❌ | ❌ |
 
 ### Flujo de Ciclo de Vida
 
 ```
-Registro → Inactivo (espera activación admin)
-    ↓ (admin activa)
-Activo → puede crear actividades, ver datos, etc.
+Registro → Activo (auto-activación inmediata)
+    ↓ puede crear actividades, ver datos, etc.
     ↓ (no paga - admin suspende)
 Suspendido → puede login, ver datos, NO puede crear/editar/eliminar
     ↓ (paga - admin reactiva)
@@ -659,7 +733,7 @@ Eliminado → acceso denegado a todo, datos conservados para auditoría
 | Endpoint | Verifica `is_deleted` | Verifica `status` | Dependencia | Respuesta si bloqueado |
 |----------|----------------------|-------------------|-------------|------------------------|
 | `POST /api/auth/login` | ✅ | ✅ | `authenticate_user()` + inline checks | "Cuenta eliminada" / "Cuenta pendiente de activación" |
-| `POST /api/auth/register` | N/A | N/A | `create_user(status="inactive")` | Registro OK, status="inactive" |
+| `POST /api/auth/register` | N/A | N/A | `create_user(status="active")` | Registro OK, status="active" |
 | `POST /api/auth/refresh` | ✅ | ✅ | Inline checks | "Cuenta eliminada" / "Cuenta pendiente" |
 | `GET /api/auth/me` | ✅ | ✅ | Inline checks | "Cuenta eliminada" / "Cuenta pendiente" |
 | `GET /api/actividades` | ❌ | ❌ | Solo verifica token (lectura permitida) | N/A |
@@ -676,7 +750,7 @@ Eliminado → acceso denegado a todo, datos conservados para auditoría
 
 ---
 
-*Última actualización: 2026-05-09*
-*Pruebas realizadas: Login Admin, Listar Usuarios, Toggle Active, Login Bloqueado, Crear Admin, Estados Suscripción*
+*Última actualización: 2026-05-13*
+*Pruebas realizadas: Login Admin, Listar Usuarios, Toggle Active, Login Bloqueado, Crear Admin, Estados Suscripción, Registro auto-activación, Rate Limiting, Suspendido login bloqueado*
 *Todos los tests PASARON ✅*
-*Completado: Panel Admin con gestión de usuarios, control de acceso y lógica SaaS de suscripción*
+*Completado: Panel Admin con gestión de usuarios, control de acceso y lógica SaaS de suscripción. Registro con auto-activación, validación en tiempo real, fortaleza de contraseña, rate limiting (3/min register, 5/min login).*

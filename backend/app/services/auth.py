@@ -140,9 +140,9 @@ async def create_user(email: str, password: str, full_name: str, db, specialty: 
         # Hashear contraseña
         password_hash = hash_password(password)
         
-        # Crear usuario
-        is_active = is_admin
-        user_status = "active" if is_admin else "inactive"
+        # Crear usuario - auto-activación
+        is_active = True
+        user_status = "active"
         user_doc = {
             "email": email,
             "password_hash": password_hash,

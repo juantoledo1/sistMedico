@@ -7,6 +7,7 @@ import { translations } from '../translations';
 interface SettingsViewProps {
   profile: UserProfile;
   settings: UserSettings;
+  isAdmin?: boolean;
   onUpdateProfile: (profile: Partial<UserProfile>) => void;
   onUpdateSettings: (settings: Partial<UserSettings>) => void;
   onDeleteFavorite: (inst: string) => void;
@@ -16,6 +17,7 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({
   profile,
   settings,
+  isAdmin = false,
   onUpdateProfile,
   onUpdateSettings,
   onDeleteFavorite,
@@ -38,6 +40,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] opacity-60 leading-none">{t.preferencias}</p>
       </header>
 
+      {!isAdmin && (<>
       {/* Avatar Selection */}
       <section className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/30 dark:shadow-none animate-in slide-in-from-bottom-2 duration-300">
         <div className="flex items-center gap-2 mb-6">
@@ -136,6 +139,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           )}
         </div>
       </section>
+      </>)}
 
       {/* Preferences */}
       <section className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/40 dark:shadow-none">

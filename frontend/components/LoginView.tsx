@@ -7,9 +7,10 @@ interface LoginViewProps {
   loginError: string;
   isLoading: boolean;
   settings: { language: Language; darkMode: boolean; currency: string };
+  onNavigateToRegister?: () => void;
 }
 
-export function LoginView({ onLogin, loginError, isLoading, settings }: LoginViewProps) {
+export function LoginView({ onLogin, loginError, isLoading, settings, onNavigateToRegister }: LoginViewProps) {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const t = translations[settings.language];
@@ -111,7 +112,13 @@ export function LoginView({ onLogin, loginError, isLoading, settings }: LoginVie
 
           <p className="text-center text-slate-400 text-sm mt-6">
             {t.noTienesCuenta}{' '}
-            <span className="text-blue-600 font-bold">{t.registrate}</span>
+            <button
+              type="button"
+              onClick={onNavigateToRegister}
+              className="text-blue-600 font-bold hover:underline bg-transparent border-none p-0 cursor-pointer"
+            >
+              {t.registrate}
+            </button>
           </p>
         </div>
       </div>

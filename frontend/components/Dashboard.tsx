@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { Transaction, PaymentStatus, UserProfile, UserSettings } from '../types';
+import { Transaction, PaymentStatus, ShiftType, UserProfile, UserSettings } from '../types';
 import { 
   Bell, 
   Search, 
@@ -41,6 +41,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
     .sort((a, b) => a.date.localeCompare(b.date));
   
   const nextShift = upcomingShifts.length > 0 ? upcomingShifts[0] : null;
+
+  const findOverlaps = (txList: Transaction[]) => {
+    const guardias = txList.filter(tx => tx.type === ShiftType.ACTIVE);
+    const warnings: string[] = [];
+    for (let i = 0; i < guardias.length; i++) {
+      for (let j = i + 1; j < guardias.length; j++) {
+        const a = guardias[i];
+        const b = guardias[j];
+        const aStart = new Date(`${a.date}T${a.startTime || '00:00'}`);
+        const aEnd = new Date(`${a.endDate || a.date}T${a.endTime || '23:59'}`);
+        const bStart = new Date(`${b.date}T${b.startTime || '00:00'}`);
+        const bEnd = new Date(`${b.endDate || b.date}T${b.endTime || '23:59'}`);
+        if (aStart <= bEnd && bStart <= aEnd) {
+          warnings.push(`${a.institution} ↔ ${b.institution}`);
+        }
+      }
+    }
+    return warnings;
+  };
+
+  const upcomingOverlaps = findOverlaps(upcomingShifts.slice(0, 10));
+  const nextOverlapWarning = upcomingOverlaps.length > 0 ? upcomingOverlaps[0] : null;
 
   const avatars = {
     masc_formal: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=256&h=256&auto=format&fit=crop",
@@ -177,11 +199,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
                  <p className="text-blue-100 font-bold mt-1 uppercase text-[9px] lg:text-[10px] tracking-widest">
                    {nextShift ? `${nextShift.date} • ${nextShift.startTime || '08:00'}` : 'Agenda disponible'}
                  </p>
+                 {nextShift && (() => {
+                   const startD = new Date(`${nextShift.date}T${nextShift.startTime || '08:00'}`);
+                   const endD = new Date(`${nextShift.endDate || nextShift.date}T${nextShift.endTime || '08:00'}`);
+                   const totalH = Math.round((endD.getTime() - startD.getTime()) / 3600000);
+                   return (
+                     <>
+                       <p className="text-blue-200 text-[8px] lg:text-[9px] font-bold mt-1">
+                         {totalH}h • Sale: {nextShift.endTime || '08:00'}{nextShift.endDate && nextShift.endDate !== nextShift.date ? ` (${nextShift.endDate})` : ''}
+                       </p>
+                       <p className="text-blue-100 text-[8px] lg:text-[9px] font-black mt-0.5">
+                         Libre a partir de: {nextShift.endDate || nextShift.date} {nextShift.endTime || '08:00'}
+                       </p>
+                     </>
+                   );
+                 })()}
               </div>
               {nextShift && (
                 <div className="flex items-center gap-2 mt-4 lg:mt-6">
                    <span className="bg-white/20 px-2 lg:px-3 py-1 text-[8px] lg:text-[9px] font-black rounded-lg uppercase">{nextShift.type}</span>
                    <span className="bg-white/20 px-2 lg:px-3 py-1 text-[8px] lg:text-[9px] font-black rounded-lg uppercase">{nextShift.status === PaymentStatus.PAID ? t.pagados : t.pendientes}</span>
+                </div>
+              )}
+              {nextOverlapWarning && (
+                <div className="mt-2 bg-red-500/30 px-2 lg:px-3 py-1 rounded-lg text-[8px] lg:text-[9px] font-black text-white">
+                  ⚠ Superposición: {nextOverlapWarning}
                 </div>
               )}
            </div>

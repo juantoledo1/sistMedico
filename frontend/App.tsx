@@ -6,6 +6,7 @@ import {
   UserProfile,
   UserSettings,
   ActivityType,
+  Institution,
 } from "./types";
 import { api } from "./services/api";
 import { GeminiService } from "./services/gemini";
@@ -83,6 +84,7 @@ const App: React.FC = () => {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -116,7 +118,7 @@ const App: React.FC = () => {
           { type: "guardia", institution: "H. Británico", date: "2026-04-15", amount: 20000, status: "pagado", notes: "Guardia de 12hs", hours: 12 },
         ];
         for (const a of mockData) {
-          try { await api.createActividad({ type: a.type as any, institution: a.institution, date: a.date, amount: a.amount, status: a.status as any, notes: a.notes, hours: a.hours }); } 
+          try { await api.createActividad({ type: a.type as any, institution: a.institution, date: a.date, amount: a.amount, notes: a.notes, hours: a.hours }); } 
           catch (e) { /* ignorar */ }
         }
         localStorage.setItem('dev_mode_seeded', 'true');
@@ -127,6 +129,9 @@ const App: React.FC = () => {
           date: a.date, amount: a.amount,
           status: a.status === "pagado" ? PaymentStatus.PAID : PaymentStatus.PENDING,
           notes: a.notes, duration: a.hours, location: a.institution,
+          startTime: a.start_time || undefined,
+          endTime: a.end_time || undefined,
+          endDate: a.end_date || undefined,
         }));
         setTransactions(txFromApi);
         console.log("✅ DATOS EJEMPLO CREADOS:", txFromApi.length);
@@ -137,6 +142,9 @@ const App: React.FC = () => {
           date: a.date, amount: a.amount,
           status: a.status === "pagado" ? PaymentStatus.PAID : PaymentStatus.PENDING,
           notes: a.notes, duration: a.hours, location: a.institution,
+          startTime: a.start_time || undefined,
+          endTime: a.end_time || undefined,
+          endDate: a.end_date || undefined,
         }));
         setTransactions(txFromApi);
       }
@@ -153,6 +161,13 @@ const App: React.FC = () => {
         if (userProfile.is_admin) setActiveView("admin");
       } catch (e) {
         console.log("No se pudo obtener perfil");
+      }
+
+      try {
+        const inst = await api.getInstitutions();
+        setInstitutions(inst.filter(i => i.is_active));
+      } catch (e) {
+        console.log("No se pudieron cargar instituciones");
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -258,6 +273,9 @@ const App: React.FC = () => {
               ? Math.round(newTx.amount / newTx.duration)
               : undefined,
           notes: newTx.notes,
+          start_time: newTx.startTime,
+          end_time: newTx.endTime,
+          end_date: newTx.endDate,
         });
         setTransactions(
           transactions.map((tx) =>
@@ -268,6 +286,9 @@ const App: React.FC = () => {
                   date: updated.date,
                   amount: updated.amount,
                   notes: updated.notes,
+                  startTime: updated.start_time || undefined,
+                  endTime: updated.end_time || undefined,
+                  endDate: updated.end_date || undefined,
                 } as Transaction)
               : tx,
           ),
@@ -289,12 +310,18 @@ const App: React.FC = () => {
               ? Math.round(newTx.amount / newTx.duration)
               : undefined,
           notes: newTx.notes,
+          start_time: newTx.startTime,
+          end_time: newTx.endTime,
+          end_date: newTx.endDate,
         });
         const tx: Transaction = {
           id: created._id,
           institution: created.institution,
           type: newTx.type || ShiftType.ACTIVE,
           date: created.date,
+          endDate: created.end_date || undefined,
+          startTime: created.start_time || undefined,
+          endTime: created.end_time || undefined,
           amount: created.amount,
           status: PaymentStatus.PENDING,
           notes: created.notes,
@@ -311,9 +338,6 @@ const App: React.FC = () => {
       console.error("Error saving:", error);
     }
 
-    setIsFormOpen(false);
-    setPrefilledDate(undefined);
-    setEditingTransaction(null);
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -323,6 +347,18 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error deleting:", error);
     }
+  };
+
+  const handleInstitutionChange = (inst: Institution) => {
+    setInstitutions(prev => {
+      const exists = prev.find(i => i.id === inst.id);
+      if (exists) return prev.map(i => i.id === inst.id ? inst : i);
+      return [inst, ...prev];
+    });
+  };
+
+  const handleInstitutionDelete = (id: string) => {
+    setInstitutions(prev => prev.filter(i => i.id !== id));
   };
 
   const handleUpdateTransaction = async (
@@ -429,8 +465,8 @@ if (isLoading) {
             <NavButton
               active={activeView === "reportes"}
               onClick={() => setActiveView("reportes")}
-              label={t.reportes || "Reportes"}
-              icon={<BarChart3 className="w-5 h-5" />}
+              label={t.guardias || "Guardias"}
+              icon={<Calendar className="w-5 h-5" />}
             />
             <NavButton
               active={activeView === "stats"}
@@ -485,7 +521,7 @@ if (isLoading) {
               transactions={transactions}
               settings={settings}
               onBack={() => setActiveView("inicio")}
-              onOpenForm={() => openForm()}
+              onOpenForm={(date, tx) => openForm(date, tx)}
               onEdit={(tx) => openForm(undefined, tx)}
               onDelete={handleDeleteTransaction}
               onUpdate={handleUpdateTransaction}
@@ -582,14 +618,19 @@ if (isLoading) {
         <ShiftForm
           onClose={() => {
             setIsFormOpen(false);
+            setPrefilledDate(undefined);
             setEditingTransaction(null);
           }}
           onSubmit={handleAddTransaction}
           initialDate={prefilledDate}
           editingTransaction={editingTransaction || undefined}
+          transactions={transactions}
           favorites={favorites}
           settings={settings}
           defaultType={defaultFormType}
+          institutions={institutions}
+          onInstitutionChange={handleInstitutionChange}
+          onInstitutionDelete={handleInstitutionDelete}
         />
       )}
     </div>

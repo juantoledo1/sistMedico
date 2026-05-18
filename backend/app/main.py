@@ -135,10 +135,11 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # ==================== ROUTERS (CRUD COMPLETO) ====================
 
-from app.routers import auth, actividades
+from app.routers import auth, actividades, institutions
 
 app.include_router(auth.router)
 app.include_router(actividades.router)
+app.include_router(institutions.router)
 
 
 # ==================== TEST ENDPOINT ====================

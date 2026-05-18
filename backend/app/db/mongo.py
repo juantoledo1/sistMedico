@@ -75,7 +75,7 @@ async def create_indexes():
         
         # Índice compuesto para actividades (userId + fecha)
         await _database.actividades.create_index(
-            [("user_id", 1), ("date", -1)],
+            [("userId", 1), ("date", -1)],
             name="user_date_index"
         )
         

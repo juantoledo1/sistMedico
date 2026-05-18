@@ -1,3 +1,5 @@
+import { Institution } from '../types';
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface RequestOptions {
@@ -129,6 +131,9 @@ class APIService {
     hours?: number;
     hourly_rate?: number;
     notes?: string;
+    start_time?: string;
+    end_time?: string;
+    end_date?: string;
   }) {
     return this.request<any>('/api/actividades/', {
       method: 'POST',
@@ -179,6 +184,31 @@ class APIService {
     return this.request<any>(`/api/auth/admin/users/${userId}`, {
       method: 'PUT',
       body: data,
+    });
+  }
+
+  // ==================== INSTITUCIONES ====================
+  async getInstitutions(): Promise<Institution[]> {
+    return this.request<Institution[]>('/api/institutions/');
+  }
+
+  async createInstitution(data: { name: string; guardia_rate?: number | null; procedimiento_rate?: number | null; interconsulta_rate?: number | null }): Promise<Institution> {
+    return this.request<Institution>('/api/institutions/', {
+      method: 'POST',
+      body: data,
+    });
+  }
+
+  async updateInstitution(id: string, data: { name?: string; guardia_rate?: number | null; procedimiento_rate?: number | null; interconsulta_rate?: number | null; is_active?: boolean }): Promise<Institution> {
+    return this.request<Institution>(`/api/institutions/${id}`, {
+      method: 'PUT',
+      body: data,
+    });
+  }
+
+  async deleteInstitution(id: string): Promise<void> {
+    return this.request<void>(`/api/institutions/${id}`, {
+      method: 'DELETE',
     });
   }
 }

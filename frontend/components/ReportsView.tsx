@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Transaction, PaymentStatus, UserSettings, Actividad, ActivityType } from '../types';
-import { 
+import { Transaction, PaymentStatus, ShiftType, UserSettings, Actividad, ActivityType } from '../types';
+import { CalendarView } from './CalendarView';
+import {
   ArrowLeft, 
   PieChart, 
   BarChart3, 
@@ -28,7 +29,7 @@ interface ReportsViewProps {
   transactions: Transaction[];
   settings: UserSettings;
   onBack: () => void;
-  onOpenForm: () => void;
+  onOpenForm: (date?: string, tx?: Transaction) => void;
   onEdit: (tx: Transaction) => void;
   onDelete: (id: string) => void;
   onUpdate: (id: string, updates: Partial<Transaction>) => void;
@@ -84,7 +85,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ transactions, settings
     }
     
     if (activityFilter !== 'Todos') {
-      filtered = filtered.filter(a => a.type === activityFilter);
+      const shiftMap: Record<string, ShiftType> = {
+        [ActivityType.GUARDIA]: ShiftType.ACTIVE,
+        [ActivityType.PROCEDIMIENTO]: ShiftType.CONSULTATION,
+        [ActivityType.INTERCONSULTA]: ShiftType.PASSIVE,
+      };
+      const targetType = shiftMap[activityFilter];
+      if (targetType) {
+        filtered = filtered.filter(a => a.type === targetType);
+      }
     }
     
     return filtered;
@@ -93,15 +102,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ transactions, settings
   const institutions = ['Todas', ...new Set(actividades.map(a => a.institution))];
   
   const totalGuardias = filteredActividades
-    .filter(a => a.type === ActivityType.GUARDIA)
+    .filter(a => a.type === ShiftType.ACTIVE)
     .reduce((sum, a) => sum + a.amount, 0);
   
   const totalProcedimientos = filteredActividades
-    .filter(a => a.type === ActivityType.PROCEDIMIENTO)
+    .filter(a => a.type === ShiftType.CONSULTATION)
     .reduce((sum, a) => sum + a.amount, 0);
   
   const totalInterconsultas = filteredActividades
-    .filter(a => a.type === ActivityType.INTERCONSULTA)
+    .filter(a => a.type === ShiftType.PASSIVE)
     .reduce((sum, a) => sum + a.amount, 0);
   
   const totalInvoiced = totalGuardias + totalProcedimientos + totalInterconsultas;
@@ -283,7 +292,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ transactions, settings
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t.reportes}</h1>
+            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t.guardias || 'Guardias'}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Análisis detallado de tu actividad profesional.</p>
           </div>
         </div>
@@ -408,144 +417,25 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ transactions, settings
         </div>
       </div>
 
-      {/* Activity Breakdown - Editable List */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl">
+      {/* Activity Breakdown - Calendar View */}
+      <div className="bg-white dark:bg-slate-800 p-4 lg:p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-black text-slate-900 dark:text-white">Detalle de Actividades</h3>
+          <h3 className="text-lg font-black text-slate-900 dark:text-white">Calendario de Actividades</h3>
           <button 
-            onClick={onOpenForm}
+            onClick={() => onOpenForm()}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
           >
             + Registrar
           </button>
         </div>
-
-        {/* Search & Filter */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Buscar por clínica o fecha..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-600 transition-all text-sm font-medium text-slate-900 dark:text-white" 
-            />
-          </div>
-          <div className="flex gap-1 bg-slate-50 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-            {(['Todos', 'Pagados', 'Pendientes'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap",
-                  statusFilter === f ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                )}
-              >
-                {f === 'Todos' ? 'Todos' : f === 'Pagados' ? 'Pagados' : 'Pendientes'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Grouped List */}
-        <div className="space-y-4">
-          {monthKeys.length > 0 ? (
-            monthKeys.map((key) => {
-              const date = parseISO(`${key}-01`);
-              const monthName = format(date, 'MMMM yyyy', { locale });
-              const isExpanded = expandedMonths.includes(key);
-              const monthTotal = groupedTransactions[key].reduce((acc, trans) => acc + trans.amount, 0);
-
-              return (
-                <div key={key} className="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden transition-all">
-                  <button 
-                    onClick={() => toggleMonth(key)}
-                    className="w-full flex items-center justify-between p-4 lg:p-5 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <div className="text-left">
-                      <h4 className="font-black text-slate-900 dark:text-white capitalize tracking-tight text-sm">{monthName}</h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{groupedTransactions[key].length} actividades</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-black text-slate-900 dark:text-white tracking-tighter shrink-0">{formatCurrency(monthTotal)}</span>
-                      <div className={cn(
-                        "w-7 h-7 rounded-lg flex items-center justify-center bg-white dark:bg-slate-800 text-slate-400 transition-transform duration-300",
-                        isExpanded && "rotate-180"
-                      )}>
-                        <ChevronDown className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </button>
-                  
-                  {isExpanded && (
-                    <div className="p-2 space-y-1 border-t border-slate-100 dark:border-slate-800">
-                      {groupedTransactions[key].map((tx) => (
-                        <div key={tx.id} className="p-3 rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-all flex flex-col sm:flex-row sm:items-center justify-between group gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <button 
-                              onClick={() => onUpdate(tx.id, { 
-                                status: tx.status === PaymentStatus.PAID ? PaymentStatus.PENDING : PaymentStatus.PAID 
-                              })}
-                              className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all group-hover:scale-110 active:scale-95 shadow-sm",
-                                tx.status === PaymentStatus.PAID ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-                              )}
-                            >
-                              <Clock className="w-5 h-5" />
-                            </button>
-                            <div className="min-w-0">
-                              <h4 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm tracking-tight truncate">{tx.institution}</h4>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">
-                                {tx.type === ActivityType.GUARDIA ? 'Guardia' : tx.type === ActivityType.PROCEDIMIENTO ? 'Procedimiento' : 'Interconsulta'} • {tx.date}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
-                            <div className="text-left sm:text-right">
-                              <span className="block font-black text-slate-900 dark:text-white tracking-tighter shrink-0">{formatCurrency(tx.amount)}</span>
-                              <button 
-                                onClick={() => onUpdate(tx.id, { 
-                                  status: tx.status === PaymentStatus.PAID ? PaymentStatus.PENDING : PaymentStatus.PAID 
-                                })}
-                                className={cn(
-                                  "text-[10px] font-black uppercase tracking-widest hover:underline decoration-2 underline-offset-2",
-                                  tx.status === PaymentStatus.PAID ? 'text-green-500 dark:text-green-400' : 'text-orange-400'
-                                )}
-                              >
-                                • {tx.status === PaymentStatus.PAID ? 'Pagado' : 'Pendiente'}
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button 
-                                onClick={() => onEdit(tx)}
-                                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-blue-600 dark:text-blue-400 rounded-xl shadow-sm hover:scale-110 active:scale-95 transition-all"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                              <button 
-                                onClick={() => onDelete(tx.id)}
-                                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-red-500 dark:text-red-400 rounded-xl shadow-sm hover:scale-110 active:scale-95 transition-all"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-              <Search className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="font-bold text-slate-400 dark:text-slate-500 text-sm">No se encontraron resultados</p>
-              <p className="text-slate-300 dark:text-slate-600 text-xs mt-1">Prueba ajustando tus filtros o búsqueda.</p>
-            </div>
-          )}
-        </div>
+        
+        <CalendarView
+          transactions={transactions}
+          onOpenForm={onOpenForm}
+          onDelete={onDelete}
+          settings={settings}
+          embedded
+        />
       </div>
 
       {/* Download Button */}

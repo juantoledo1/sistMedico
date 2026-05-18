@@ -48,6 +48,7 @@ class ActividadCreate(ActividadBase):
     hourly_rate: Optional[int] = Field(None, ge=0, description="Valor por hora")
     start_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$", description="Hora inicio")
     end_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$", description="Hora fin")
+    end_date: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$", description="Fecha fin (YYYY-MM-DD)")
     
     # Campos específicos de Procedimiento
     procedure_name: Optional[str] = Field(None, max_length=200, description="Nombre del procedimiento")
@@ -70,6 +71,9 @@ class ActividadUpdate(BaseModel):
     amount: Optional[int] = None
     status: Optional[PaymentStatus] = None
     notes: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    end_date: Optional[str] = None
 
 
 class ActividadResponse(ActividadBase):
@@ -86,6 +90,7 @@ class ActividadResponse(ActividadBase):
     hourly_rate: Optional[int] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
+    end_date: Optional[str] = None
     procedure_name: Optional[str] = None
     quantity: Optional[int] = None
     unit_value: Optional[int] = None

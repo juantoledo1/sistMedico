@@ -104,6 +104,15 @@ export interface Transaction {
   location?: string;
 }
 
+export interface Institution {
+  id: string;
+  name: string;
+  guardia_rate?: number | null;
+  procedimiento_rate?: number | null;
+  interconsulta_rate?: number | null;
+  is_active: boolean;
+}
+
 export interface FinancialStats {
   totalMonthly: number;
   trendPercentage: number;

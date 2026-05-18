@@ -177,6 +177,9 @@ sist_med/                     # RAÍZ DEL PROYECTO
 - ❌ Envío automático de PDF por email
 - ❌ Recuperación de contraseña por email (prioridad baja)
 
+### NOTA: Componentes huérfanos (sin usar en la app)
+- `Sidebar.tsx`, `Timeline.tsx`, `GenerationForm.tsx`, `Canvas.tsx`, `Block.tsx` - de otro proyecto, no integrados
+
 ### NOTA: Duplicados identificados (NO eliminar hasta verificar)
 - `frontend/src/services/api.ts`: Duplicado de `frontend/services/api.ts` (el correcto)
 - `frontend/App.tsx`: En raíz (no en src/)
@@ -325,6 +328,18 @@ npm run dev
 ### Pendiente ❌
 - Refresh Token Rotation
 
+### Pendiente de Decisión — Duración de Sesión (⚠️ Consultar Clientes)
+- Actual: Access Token expira en **15 min**, Refresh Token en **7 días**
+- Debate: ¿Es profesional/seguro para un médico tener sesión corta (15 min) o conviene extender?
+- Riesgo: sesión corta molesta al médico que carga datos y vuelve horas después (tiene que reloguearse)
+- Beneficio: si usan computadoras compartidas en hospital, 15 min protege datos
+- Opciones a consultar con clientes:
+  a) **8h access + 30d refresh**: suficiente para jornada laboral, sesión se mantiene si no cierra navegador
+  b) **15 min access + 7d refresh**: actual, más seguro pero molesto si no se implementa refresh automático
+  c) **4h access + 15d refresh**: punto medio
+- Agregar aviso visual antes de expirar + modal claro de "Sesión expirada" (NO Token inválido misterioso)
+- Enlace a discusión: `ai.md#10-seguridad`
+
 ---
 
 ## 11. Roadmap / Progreso
@@ -344,6 +359,14 @@ PRÓXIMO:
 [ ] Tests
 [ ] Limpiar código
 [ ] Producción
+
+LOGROS RECIENTES:
+✅ Calendario integral en ReportsView (embedded)
+✅ Backend optimizado: /stats con aggregation MongoDB
+✅ MongoDB index corregido: user_id → userId
+✅ CRUD completo desde calendario (guardias, proc., intercons.)
+✅ Resumen mensual en calendario (Total/Cobrado/Pendiente)
+✅ Responsive: mobile, tablet, desktop
 ```
 
 ---
@@ -491,8 +514,9 @@ async def login(response: Response, ...):
 - `LoadingView.tsx`: UI de carga (extraído)
 - `Dashboard.tsx`: Vista principal
 - `StatsView.tsx`: Estadísticas
-- `ReportsView.tsx`: Reportes
+- `ReportsView.tsx`: Reportes con calendario integrado (embedded CalendarView)
 - `RegisterView.tsx`: Registro de usuarios
+- `CalendarView.tsx`: Calendario interactivo (standalone + embedded en ReportsView)
 
 ### Login Flow Actual:
 1. `App.tsx` → Verifica `isAuthenticated`
@@ -750,7 +774,187 @@ Eliminado → acceso denegado a todo, datos conservados para auditoría
 
 ---
 
+## 25. Calendario Integrado en ReportsView (2026-05-13)
+
+### Ubicación
+- **Archivo**: `frontend/components/ReportsView.tsx`
+- **Sección**: "Calendario de Actividades" (reemplaza el antiguo listado agrupado)
+- **Componente embebido**: `CalendarView.tsx` con prop `embedded=true`
+
+### Funcionalidades
+| Función | Descripción |
+|---------|-------------|
+| **Grid mensual** | Navegación con flechas, botón "Hoy", día actual marcado |
+| **Actividades por día** | Muestra institución, monto (resumido en "k"), y badge de tipo |
+| **Resumen mensual** | 3 tarjetas: Total / Cobrado (verde) / Pendiente (naranja) |
+| **Panel de día (desktop)** | Sidebar con detalle: tipo, monto, estado, editar/eliminar |
+| **Modal día (mobile)** | Slide-up con mismo detalle que desktop |
+| **Crear actividad** | Botón "+" → ShiftForm con fecha pre-seteada |
+| **Editar actividad** | Click en icono lápiz → ShiftForm con datos cargados |
+| **Eliminar actividad** | Click en icono papelera → confirma y elimina |
+| **Colores por tipo** | Guardia (azul), Procedimiento (violeta), Interconsulta (verde) |
+| **Estados de pago** | Pagado (verde), Pendiente (naranja) |
+
+### Flujo de Uso
+```
+Doctor loguea → Inicio (Dashboard con stats)
+  → Navega a "Reportes" en sidebar
+    → Ve filtros (período, institución, tipo) + stats
+    → Ve "Calendario de Actividades" con grid mensual
+      → Cambia meses con flechas
+      → Click en día → panel detalle (desktop) o modal (mobile)
+      → Crea/edita/elimina actividades
+      → Ve resumen Total/Cobrado/Pendiente del mes
+```
+
+### Responsive
+| Dispositivo | Layout |
+|-------------|--------|
+| **Mobile** | Calendario ocupa todo el ancho, detalle en modal slide-up |
+| **Desktop** | Grid 8 cols + Panel detalle 4 cols sticky |
+| **Tablet** | Grid completo, detalle en panel |
+
+---
+
+## 26. Backend - Optimizaciones
+
+### Index corregido (mongo.py)
+- **Antes**: `[("user_id", 1), ("date", -1)]` (no coincidía con el campo usado)
+- **Después**: `[("userId", 1), ("date", -1)]` (coincide con el campo real)
+
+### Stats optimizado (actividades.py)
+- **Antes**: Python loop sobre cursor → O(n) en memoria
+- **Después**: MongoDB aggregation pipeline → procesado en DB
+- **Performance**: Reduce tiempo de carga de stats significativamente
+
+---
+
+---
+
+## 27. Instituciones (CRUD + Tarifas) — 2026-05-13
+
+### Backend
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| GET | `/api/institutions/` | ✅ | Listar instituciones activas del usuario |
+| POST | `/api/institutions/` | ✅ | Crear institución con tarifas |
+| PUT | `/api/institutions/{id}` | ✅ | Actualizar institución (nombre, tarifas, is_active) |
+| DELETE | `/api/institutions/{id}` | ✅ | Soft delete (is_active=false) |
+
+### Modelo Institution
+```json
+{
+  "_id": "ObjectId",
+  "userId": "string",
+  "name": "string",
+  "guardia_rate": "int|null ($/hora)",
+  "procedimiento_rate": "int|null ($/unidad)",
+  "interconsulta_rate": "int|null ($/consulta)",
+  "is_active": "boolean (default true)",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### Auto-guardado de tarifas (actividades.py)
+- Al crear una actividad, si la institución existe, se actualiza su tarifa correspondiente según el tipo.
+- Ejemplo: crear guardia con hourly_rate=2000 → actualiza `institutions.guardia_rate=2000`
+
+### Frontend
+
+#### types.ts
+```typescript
+export interface Institution {
+  id: string;
+  name: string;
+  guardia_rate?: number | null;
+  procedimiento_rate?: number | null;
+  interconsulta_rate?: number | null;
+  is_active: boolean;
+}
+```
+
+#### App.tsx
+- Estado global `institutions[]` con fetch al login (después de profile)
+- Handlers: `handleInstitutionChange` (upsert), `handleInstitutionDelete` (filter)
+- Pasado a ShiftForm como props
+
+### Gestión inline desde ShiftForm
+| Feature | Detalle |
+|---------|---------|
+| Dropdown searchable | Input de búsqueda + lista filtrada |
+| Auto-fill tarifas | Al seleccionar institución, rellena hourlyRate/unitValue/amount según tipo |
+| + Nueva institución | Formulario inline con nombre y 3 tarifas |
+| Editar institución | Botón editar en dropdown → mismo formulario |
+| Eliminar institución | Botón X con confirmación → soft delete (is_active=false) |
+| Badge tarifas | Muestra tasas de la institución seleccionada |
+
+---
+
+## 28. Actividades Extra en Guardias — 2026-05-13
+
+### Concepto
+Dentro de una guardia, el médico puede agregar procedimientos o interconsultas adicionales con sus propios montos, notas y especificaciones.
+
+### Implementación
+- Sección "Actividades extra" visible solo cuando `activityType === 'guardia'`
+- Botón "+ Agregar" para añadir ítems
+- Cada ítem tiene: tipo (Proced./Interc.), nombre/especialidad, monto, notas
+- Se guardan como actividades independientes (misma fecha/institución)
+- Submit envía guardia + cada extra como llamada individual a `onSubmit()`
+- App.tsx maneja cada submit como creación separada (no cierra el form hasta terminar)
+
+### UX
+- Selector de tipo por ítem (Proced. / Interc. con colores)
+- Inputs de monto con formato numérico
+- Botón X para remover ítem
+- Total de extras calculado y mostrado
+- Botón submit muestra "Guardar (N actividades)"
+
+---
+
+## 29. CalendarView — Mobile UX Improvements — 2026-05-13
+
+### Cambios realizados
+
+| Mejora | Antes | Después |
+|--------|-------|---------|
+| Modal altura | 80vh | 70vh (más espacio arriba) |
+| Safe area | Sin padding | `env(safe-area-inset-bottom, 24px)` |
+| Tipo actividad badges | Comparaba vs strings (bug) | Compara vs `ShiftType` enum (correcto) |
+| Touch targets | 32-36px | Mínimo 40px (Sí/No confirmación) |
+| Confirmación delete | Sin confirmación | Diálogo inline "¿Eliminar? Sí/No" con estado `confirmDeleteId` |
+| Badge actividad | Texto 8px | Texto 9px + padding 2.5 |
+
+### Confirmación de eliminación
+- Click en papelera → muestra botones "Sí"/"No" inline
+- Sí ejecuta `onDelete()`, No cancela
+- Previene eliminaciones accidentales
+
+---
+
+## 30. Backend Institutions Router — 2026-05-13
+
+### Archivos nuevos
+- `backend/app/models/institution.py`: InstitutionBase, InstitutionCreate, InstitutionUpdate, InstitutionResponse
+- `backend/app/routers/institutions.py`: CRUD completo con autenticación y multi-tenant
+
+### Archivos modificados
+- `backend/app/main.py`: Registrado router de instituciones
+- `backend/app/routers/actividades.py`: Auto-guardado de tarifas al crear actividad
+
+### Endpoints
+| Método | Ruta | Auth | Body | Respuesta |
+|--------|------|------|------|-----------|
+| GET | `/api/institutions/` | JWT | — | Lista de instituciones del usuario (solo activas) |
+| POST | `/api/institutions/` | JWT | `{name, guardia_rate?, procedimiento_rate?, interconsulta_rate?}` | Institución creada |
+| PUT | `/api/institutions/{id}` | JWT | `{name?, guardia_rate?, procedimiento_rate?, interconsulta_rate?, is_active?}` | Institución actualizada |
+| DELETE | `/api/institutions/{id}` | JWT | — | Soft delete (is_active=false) |
+
+---
+
 *Última actualización: 2026-05-13*
-*Pruebas realizadas: Login Admin, Listar Usuarios, Toggle Active, Login Bloqueado, Crear Admin, Estados Suscripción, Registro auto-activación, Rate Limiting, Suspendido login bloqueado*
+*Pruebas realizadas: Login Admin, Listar Usuarios, Toggle Active, Login Bloqueado, Crear Admin, Estados Suscripción, Registro auto-activación, Rate Limiting, Suspendido login bloqueado, CRUD actividades, Calendario integrado en ReportsView, Stats optimizado, Index corregido, CRUD instituciones backend, Métodos Institution frontend, App.tsx integración instituciones, ShiftForm rework (dropdown + tarifas + extras), CalendarView mobile UX + type badges fix + delete confirm*
 *Todos los tests PASARON ✅*
-*Completado: Panel Admin con gestión de usuarios, control de acceso y lógica SaaS de suscripción. Registro con auto-activación, validación en tiempo real, fortaleza de contraseña, rate limiting (3/min register, 5/min login).*
+*Completado: Panel Admin con gestión de usuarios, control de acceso y lógica SaaS de suscripción. Registro con auto-activación, validación en tiempo real, fortaleza de contraseña, rate limiting (3/min register, 5/min login). ReportsView con calendario integrado guardias/procedimientos/interconsultas. Backend optimizado con aggregation pipeline e index corregido. CRUD instituciones backend y frontend. Gestión inline desde ShiftForm con dropdown searchable, tarifas auto-fill, add/edit/delete. Actividades extra dentro de guardias. CalendarView mobile UX mejorado: modal 70vh, safe area, badges fijas, delete confirm, touch targets 40px+.*

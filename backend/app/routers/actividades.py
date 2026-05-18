@@ -30,7 +30,7 @@ async def get_current_user_id(credentials = Depends(security)) -> str:
     return payload.get("sub")
 
 
-async def verify_user_active(user_id: str, db: AsyncIOMotorDatabase = Depends(get_database)):
+async def verify_user_active(user_id: str = Depends(get_current_user_id), db: AsyncIOMotorDatabase = Depends(get_database)):
     """Verificar que el usuario está activo (status = 'active')"""
     from bson import ObjectId
     try:
@@ -83,6 +83,7 @@ async def crear_actividad(
         "hourly_rate": actividad.hourly_rate,
         "start_time": actividad.start_time,
         "end_time": actividad.end_time,
+        "end_date": actividad.end_date,
         # Procedimiento
         "procedure_name": actividad.procedure_name,
         "quantity": actividad.quantity,
@@ -100,7 +101,37 @@ async def crear_actividad(
     result = await db.actividades.insert_one(doc)
     doc["_id"] = str(result.inserted_id)
     doc["userId"] = user_id
-    
+
+    # Auto-guardar/actualizar tarifa de institución
+    try:
+        rate = None
+        if actividad.type == ActivityType.GUARDIA:
+            rate = actividad.hourly_rate
+        elif actividad.type == ActivityType.PROCEDIMIENTO:
+            rate = actividad.unit_value
+        elif actividad.type == ActivityType.INTERCONSULTA:
+            rate = actividad.amount
+
+        if rate and rate > 0:
+            inst = await db.institutions.find_one({"userId": user_id, "name": actividad.institution})
+            rate_field = f"{actividad.type.value}_rate"
+            if inst:
+                await db.institutions.update_one(
+                    {"_id": inst["_id"]},
+                    {"$set": {rate_field: rate, "updated_at": datetime.utcnow()}}
+                )
+            else:
+                await db.institutions.insert_one({
+                    "userId": user_id,
+                    "name": actividad.institution,
+                    rate_field: rate,
+                    "is_active": True,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                })
+    except Exception as e:
+        logger.warning(f"⚠️ No se pudo guardar tarifa de institución: {e}")
+
     logger.info(f"✅ Actividad creada: {actividad.type} por usuario {user_id}")
     return doc
 
@@ -164,19 +195,19 @@ async def obtener_estadisticas(
     total_procedimientos = sum(r["total"] for r in results if r["_id"] == "procedimiento")
     total_interconsultas = sum(r["total"] for r in results if r["_id"] == "interconsulta")
     
-    # Totales generales
-    all_pipeline = [{"$match": {"userId": user_id}}]
-    all_cursor = db.actividades.find({"userId": user_id})
-    total_ingresos = 0
-    cobrado = 0
-    pendiente = 0
-    
-    async for doc in all_cursor:
-        total_ingresos += doc.get("amount", 0)
-        if doc.get("status") == "pagado":
-            cobrado += doc.get("amount", 0)
-        else:
-            pendiente += doc.get("amount", 0)
+    # Totales generales (usando aggregation para performance)
+    status_pipeline = [
+        {"$match": {"userId": user_id}},
+        {"$group": {
+            "_id": "$status",
+            "total": {"$sum": "$amount"},
+            "count": {"$sum": 1}
+        }}
+    ]
+    status_results = await db.actividades.aggregate(status_pipeline).to_list(10)
+    total_ingresos = sum(r["total"] for r in status_results)
+    cobrado = sum(r["total"] for r in status_results if r["_id"] == "pagado")
+    pendiente = sum(r["total"] for r in status_results if r["_id"] == "pendiente")
     
     now = datetime.utcnow()
     

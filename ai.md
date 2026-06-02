@@ -280,7 +280,7 @@ cd backend
 docker build -t medflow-api .
 docker run -d --name medflow-api -p 8000:8000 --network host \
   -e MONGO_URI="mongodb://localhost:27017/medflow" \
-  -e SECRET_KEY="medflow-test-key-32-chars-minimum!!" \
+  -e SECRET_KEY="<tu-secret-key-aqui>" \
   medflow-api
 
 # 3. Frontend
@@ -297,7 +297,7 @@ npm run dev
 | Variable | Descripción | Ejemplo |
 |----------|-------------|---------|
 | `MONGO_URI` | Conexión MongoDB | `mongodb://localhost:27017/medflow` |
-| `SECRET_KEY` | Clave JWT (mín 32 chars) | `medflow-pro-secret-key-32!!` |
+| `SECRET_KEY` | Clave JWT (mín 32 chars) | `<tu-secret-key-aqui>` |
 | `CORS_ORIGINS` | Orígenes permitidos (comma) | `http://localhost:5173` |
 
 ---
@@ -638,14 +638,9 @@ en: {
 ## 22. Credenciales de Prueba (Desarrollo)
 
 ```
-Email: drrodriguez@test.com
-Contraseña: Medico123!
-
-Email: dra.perez@test.com
-Contraseña: Medico123!
-
-Email: dratest@test.com
-Contraseña: Medico123!
+Email: medico1@tudominio.com / Contraseña: <password-test>
+Email: medico2@tudominio.com / Contraseña: <password-test>
+Email: medico3@tudominio.com / Contraseña: <password-test>
 ```
 
 ---
@@ -707,23 +702,18 @@ Contraseña: Medico123!
 - **`.gitignore`** excluye `.env`, `.env.*.local`, `*.pem`, `*.key`, `credentials.json`
 - **Frontend `.gitignore`** actualizado con `.env` y patrones de seguridad
 
-### Credenciales Admin
+### Credenciales Admin (desarrollo)
 ```
-Email: admin@medflow.com
-Contraseña: Admin1234
-Secreto para crear admin: medflow-admin-2026
+Email: admin@tudominio.com
+Contraseña: <tu-contraseña-admin>
+Secreto para crear admin: <tu-admin-secret>
 ```
 
-### Credenciales Médicos (prueba)
+### Credenciales Médicos (prueba, desarrollo)
 ```
-Email: drrodriguez@test.com
-Contraseña: Medico123!
-
-Email: dra.perez@test.com
-Contraseña: Medico123!
-
-Email: dratest@test.com
-Contraseña: Medico123!
+Email: medico1@tudominio.com / Contraseña: <password-test>
+Email: medico2@tudominio.com / Contraseña: <password-test>
+Email: medico3@tudominio.com / Contraseña: <password-test>
 ```
 
 ---

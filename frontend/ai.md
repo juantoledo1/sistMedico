@@ -52,19 +52,19 @@ App.tsx
 ### MongoDB Fix ⚠️
 La MONGO_URI en `docker-compose.yml` debe incluir `?authSource=admin`:
 ```yaml
-MONGO_URI: mongodb://admin:password@mongodb:27017/medflow?authSource=admin
+MONGO_URI: mongodb://<usuario>:<password>@mongodb:27017/medflow?authSource=admin
 ```
 Sin esto, el backend falla con "Authentication failed" porque el usuario root se crea en la DB `admin` pero por defecto el driver intenta autenticar contra la DB del path (`medflow`).
 
 ### Test Credentials
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | `admin@medflow.com` | `Admin1234` |
-| Médico | `drrodriguez@test.com` | `Medico123!` |
-| Médico | `dra.perez@test.com` | `Medico123!` |
-| Médico | `dratest@test.com` | `Medico123!` |
+| Admin | `admin@tudominio.com` | `<password-admin>` |
+| Médico | `medico1@tudominio.com` | `<password-test>` |
+| Médico | `medico2@tudominio.com` | `<password-test>` |
+| Médico | `medico3@tudominio.com` | `<password-test>` |
 
-Admin secret para register-admin: `medflow-admin-2026`
+Admin secret para register-admin: `<tu-admin-secret>`
 
 ## API Services
 - `api.getActividades()`, `api.createActividad()`, `api.updateActividad()`, `api.deleteActividad()`

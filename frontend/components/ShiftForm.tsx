@@ -12,6 +12,7 @@ interface ExtraActivity {
   specialty?: string;
   amount: number;
   notes?: string;
+  status: PaymentStatus;
 }
 
 interface ShiftFormProps {
@@ -20,7 +21,6 @@ interface ShiftFormProps {
   initialDate?: string;
   editingTransaction?: Transaction;
   transactions?: Transaction[];
-  favorites: string[];
   settings: UserSettings;
   defaultType?: 'guardia' | 'procedimiento' | 'interconsulta';
   institutions: Institution[];
@@ -39,7 +39,7 @@ const HELP_ICON = String.fromCharCode(0x1F4A1);
 export const ShiftForm: React.FC<ShiftFormProps> = ({
   onClose, onSubmit, initialDate, editingTransaction,
   transactions,
-  favorites, settings, defaultType = 'guardia',
+  settings, defaultType = 'guardia',
   institutions, onInstitutionChange, onInstitutionDelete
 }) => {
   const t = translations[settings.language];
@@ -72,8 +72,6 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
   const [procedureSuggestions, setProcedureSuggestions] = useState<string[]>([]);
 
   const [specialty, setSpecialty] = useState<string>('');
-  const [patientLocation, setPatientLocation] = useState<'intraservicio' | 'extraservicio'>('intraservicio');
-  const [complexity, setComplexity] = useState<boolean>(false);
 
   const [instSearch, setInstSearch] = useState('');
   const [instDropdownOpen, setInstDropdownOpen] = useState(false);
@@ -107,9 +105,23 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
         specialty: t.notes?.startsWith('interconsulta') ? t.notes : undefined,
         amount: t.amount,
         notes: t.notes,
+        status: t.status || PaymentStatus.PENDING,
       })));
     }
   }, [editingTransaction]);
+
+  useEffect(() => {
+    if (activityType === 'guardia' && date && hours > 0 && startTime) {
+      const [sh, sm] = startTime.split(':').map(Number);
+      const start = new Date(date + 'T' + startTime);
+      const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
+      const endDateStr = end.toISOString().split('T')[0];
+      setEndDate(endDateStr);
+      const eh = String(end.getHours()).padStart(2, '0');
+      const em = String(end.getMinutes()).padStart(2, '0');
+      setEndTime(eh + ':' + em);
+    }
+  }, [date, hours, startTime, activityType]);
 
   const [editingRateType, setEditingRateType] = useState<'guardia_rate' | 'procedimiento_rate' | 'interconsulta_rate' | null>(null);
   const [tempRateValue, setTempRateValue] = useState('');
@@ -118,10 +130,11 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
   useEffect(() => {
     if (activityType === 'guardia' && hours > 0 && hourlyRate && hourlyRate.trim() !== '') {
       const rawRate = parseInt(hourlyRate.replace(/\D/g, '')) || 0;
-      const total = hours * rawRate;
+      const et = extras.reduce((s, e) => s + e.amount, 0);
+      const total = (hours * rawRate) + et;
       if (total > 0) setAmount(total.toLocaleString('es-AR'));
     }
-  }, [hours, hourlyRate, activityType]);
+  }, [hours, hourlyRate, extras, activityType]);
 
   useEffect(() => {
     if (activityType === 'procedimiento' && quantity > 0 && unitValue && unitValue.trim() !== '') {
@@ -130,14 +143,6 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
       if (total > 0) setAmount(total.toLocaleString('es-AR'));
     }
   }, [quantity, unitValue, activityType]);
-
-  useEffect(() => {
-    if (activityType === 'interconsulta' && amount) {
-      const raw = parseInt(amount.replace(/\D/g, '')) || 0;
-      const mult = patientLocation === 'extraservicio' || complexity ? 1.5 : 1;
-      setAmount((raw * mult).toLocaleString('es-AR'));
-    }
-  }, [patientLocation, complexity, activityType]);
 
   useEffect(() => {
     if (activityType === 'procedimiento' && procedureName.length >= 1) {
@@ -185,12 +190,30 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
     i.is_active && i.name.toLowerCase().includes(instSearch.toLowerCase())
   );
 
-  const selectedInstitution = institutions.find(i => i.name === institution && i.is_active);
+  const selectedInstitution = institutions.find(i => i.name.toLowerCase().trim() === institution.toLowerCase().trim() && i.is_active);
 
   const handleSelectInstitution = (name: string) => {
     setInstitution(name);
     setInstSearch('');
     setInstDropdownOpen(false);
+    const inst = institutions.find(i => i.name.toLowerCase().trim() === name.toLowerCase().trim());
+    if (inst) {
+      if (inst.guardia_rate && activityType === 'guardia') {
+        setHourlyRate(inst.guardia_rate.toString());
+      }
+      if (inst.procedimiento_rate && activityType === 'procedimiento') {
+        setUnitValue(inst.procedimiento_rate.toString());
+      }
+      if (inst.interconsulta_rate && activityType === 'interconsulta') {
+        setAmount(inst.interconsulta_rate.toLocaleString('es-AR'));
+      }
+      setExtras(extras.map(e => ({
+        ...e,
+        amount: e.amount === 0
+          ? (e.type === 'procedimiento' ? (inst.procedimiento_rate || 0) : (inst.interconsulta_rate || 0))
+          : e.amount,
+      })));
+    }
   };
 
   const handleOpenNewInst = () => {
@@ -233,6 +256,8 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
         });
         onInstitutionChange(created);
         setInstitution(created.name);
+        setInstSearch('');
+        setInstDropdownOpen(true);
       }
       setInstEditMode(false);
     } catch (e) {
@@ -272,12 +297,14 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
   };
 
   const addExtra = () => {
+    const rate = selectedInstitution?.procedimiento_rate || 0;
     const newExtra: ExtraActivity = {
       id: Math.random().toString(36).slice(2),
       type: 'procedimiento',
       procedureName: '',
-      amount: 0,
+      amount: rate,
       notes: '',
+      status: PaymentStatus.PENDING,
     };
     setExtras([...extras, newExtra]);
   };
@@ -313,6 +340,11 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
         status,
         notes,
         id: editingTransaction?.id,
+        duration: activityType === 'guardia' ? hours : undefined,
+        procedureName: activityType === 'procedimiento' ? procedureName : undefined,
+        quantity: activityType === 'procedimiento' ? quantity : undefined,
+        unitValue: activityType === 'procedimiento' ? (parseInt(unitValue.replace(/\D/g, '')) || 0) : undefined,
+        specialty: activityType === 'interconsulta' ? specialty : undefined,
       });
 
       for (const extra of extras) {
@@ -322,8 +354,10 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
             date,
             institution,
             type: extra.type === 'procedimiento' ? ShiftType.CONSULTATION : ShiftType.PASSIVE,
-            status: PaymentStatus.PENDING,
+            status: extra.status,
             notes: `${extra.type === 'procedimiento' ? extra.procedureName : extra.specialty}${extra.notes ? ': ' + extra.notes : ''}`,
+            procedureName: extra.type === 'procedimiento' ? extra.procedureName : undefined,
+            specialty: extra.type === 'interconsulta' ? extra.specialty : undefined,
           });
         }
       }
@@ -453,12 +487,12 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
                       <p className="px-3 py-4 text-xs text-slate-400 text-center">Sin resultados</p>
                     ) : (
                       filteredInstitutions.map(inst => (
-                        <div key={inst.id} className="flex items-center px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 group">
+                        <div key={inst.id} className="flex items-center px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700">
                           <button type="button" onClick={() => handleSelectInstitution(inst.name)}
                             className="flex-1 text-left text-sm font-bold truncate text-slate-900 dark:text-white" style={{ minHeight: '36px' }}>
                             {inst.name}
                           </button>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex gap-1">
                             <button type="button" onClick={() => handleEditInst(inst)}
                               className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-slate-400 hover:text-blue-600">
                               <Edit3 className="w-3.5 h-3.5" />
@@ -687,31 +721,10 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
           )}
 
           {activityType === 'interconsulta' && (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500">Especialidad</label>
-                <input type="text" value={specialty} onChange={(e) => setSpecialty(e.target.value)}
-                  placeholder="Ej: Cardiología, UTI..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500">Ubicaci\u00F3n</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => setPatientLocation('intraservicio')}
-                    className={cn("p-3 rounded-xl border-2 font-bold text-sm",
-                      patientLocation === 'intraservicio' ? 'bg-green-600 border-green-600 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 text-slate-600 dark:text-slate-400')}>
-                    Intra-servicio
-                  </button>
-                  <button type="button" onClick={() => setPatientLocation('extraservicio')}
-                    className={cn("p-3 rounded-xl border-2 font-bold text-sm",
-                      patientLocation === 'extraservicio' ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 text-slate-600 dark:text-slate-400')}>
-                    Extra (recargo)
-                  </button>
-                </div>
-              </div>
-              <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                <input type="checkbox" checked={complexity} onChange={(e) => setComplexity(e.target.checked)} className="w-5 h-5" />
-                <span className="font-bold text-sm text-slate-900 dark:text-white">Alta complejidad (recargo)</span>
-              </label>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500">Especialidad</label>
+              <input type="text" value={specialty} onChange={(e) => setSpecialty(e.target.value)}
+                placeholder="Ej: Cardiología, UTI..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
             </div>
           )}
 
@@ -746,19 +759,6 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
             </div>
           )}
 
-          {/* FAVORITES */}
-          {favorites.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {favorites.map(fav => (
-                <button key={fav} type="button" onClick={() => handleSelectInstitution(fav)}
-                  className={cn("px-3 py-1.5 rounded-lg text-xs font-bold border",
-                    institution === fav ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 text-slate-600 dark:text-slate-400')}>
-                  {fav}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* EXTRAS */}
           <div className="space-y-3">
             <div>
@@ -779,12 +779,12 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
                   <div key={extra.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex gap-1">
-                        <button type="button" onClick={() => updateExtra(extra.id, { type: 'procedimiento' })}
+                        <button type="button" onClick={() => updateExtra(extra.id, { type: 'procedimiento', amount: selectedInstitution?.procedimiento_rate || extra.amount })}
                           className={cn("px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase",
                             extra.type === 'procedimiento' ? 'bg-purple-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500')} style={{ minHeight: '32px' }}>
                           Proced.
                         </button>
-                        <button type="button" onClick={() => updateExtra(extra.id, { type: 'interconsulta' })}
+                        <button type="button" onClick={() => updateExtra(extra.id, { type: 'interconsulta', amount: selectedInstitution?.interconsulta_rate || extra.amount })}
                           className={cn("px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase",
                             extra.type === 'interconsulta' ? 'bg-green-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500')} style={{ minHeight: '32px' }}>
                           Interc.
@@ -812,6 +812,18 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
                     )}
                     <input type="text" value={extra.notes || ''} onChange={e => updateExtra(extra.id, { notes: e.target.value })}
                       placeholder="Notas (opcional)" className="w-full bg-white dark:bg-slate-700 border border-slate-200 rounded-lg p-2 text-sm text-slate-900 dark:text-white" />
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => updateExtra(extra.id, { status: PaymentStatus.PENDING })}
+                        className={cn("flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[9px] font-bold uppercase",
+                          extra.status === PaymentStatus.PENDING ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-500')} style={{ minHeight: '28px' }}>
+                        <Clock className="w-2.5 h-2.5" /> Pendiente
+                      </button>
+                      <button type="button" onClick={() => updateExtra(extra.id, { status: PaymentStatus.PAID })}
+                        className={cn("flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[9px] font-bold uppercase",
+                          extra.status === PaymentStatus.PAID ? 'bg-green-600 text-white shadow-sm' : 'bg-slate-200 dark:bg-slate-700 text-slate-500')} style={{ minHeight: '28px' }}>
+                        <Check className="w-2.5 h-2.5" /> Pagado
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {extraTotal > 0 && (

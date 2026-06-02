@@ -102,6 +102,10 @@ export interface Transaction {
   notes?: string;
   duration?: number;
   location?: string;
+  procedureName?: string;
+  quantity?: number;
+  unitValue?: number;
+  specialty?: string;
 }
 
 export interface Institution {

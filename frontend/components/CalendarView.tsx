@@ -148,27 +148,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ transactions, onOpen
       )}
 
       {/* Monthly Summary */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800 overflow-hidden">
           <div className="flex items-center gap-1.5 mb-1">
-            <TrendingUp className="w-3 h-3 text-blue-600" />
+            <TrendingUp className="w-3 h-3 text-blue-600 shrink-0" />
             <span className="text-[9px] font-black text-blue-600 uppercase tracking-wider">Total</span>
           </div>
-          <p className="text-lg font-black text-slate-900 dark:text-white">{formatCurrency(monthSummary.total)}</p>
+          <p className="text-sm md:text-lg font-black text-slate-900 dark:text-white truncate">{formatCurrency(monthSummary.total)}</p>
         </div>
-        <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl border border-green-100 dark:border-green-800">
+        <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl border border-green-100 dark:border-green-800 overflow-hidden">
           <div className="flex items-center gap-1.5 mb-1">
-            <CreditCard className="w-3 h-3 text-green-600" />
+            <CreditCard className="w-3 h-3 text-green-600 shrink-0" />
             <span className="text-[9px] font-black text-green-600 uppercase tracking-wider">Cobrado</span>
           </div>
-          <p className="text-lg font-black text-green-700 dark:text-green-400">{formatCurrency(monthSummary.paid)}</p>
+          <p className="text-sm md:text-lg font-black text-green-700 dark:text-green-400 truncate">{formatCurrency(monthSummary.paid)}</p>
         </div>
-        <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl border border-orange-100 dark:border-orange-800">
+        <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl border border-orange-100 dark:border-orange-800 overflow-hidden">
           <div className="flex items-center gap-1.5 mb-1">
-            <Wallet className="w-3 h-3 text-orange-600" />
+            <Wallet className="w-3 h-3 text-orange-600 shrink-0" />
             <span className="text-[9px] font-black text-orange-600 uppercase tracking-wider">Pendiente</span>
           </div>
-          <p className="text-lg font-black text-orange-700 dark:text-orange-400">{formatCurrency(monthSummary.pending)}</p>
+          <p className="text-sm md:text-lg font-black text-orange-700 dark:text-orange-400 truncate">{formatCurrency(monthSummary.pending)}</p>
         </div>
       </div>
 
@@ -283,8 +283,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ transactions, onOpen
       </div>
 
       {showDayModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-end animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 w-full h-[70vh] rounded-t-[3rem] p-8 pt-6 flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden pb-safe" style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}>
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-end sm:items-center animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-[3rem] h-[85vh] sm:h-auto sm:max-h-[80vh] rounded-t-[3rem] p-6 lg:p-8 pt-6 flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden pb-safe" style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}>
             <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mx-auto mb-6" onClick={() => setShowDayModal(false)} />
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">

@@ -6,6 +6,8 @@ Token cortos (15 min) + Refresh Token (7 días)
 from datetime import datetime, timedelta
 from typing import Optional
 import logging
+import secrets
+import string
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from bson import ObjectId
@@ -209,3 +211,27 @@ def sanitize_input(text: str) -> str:
         sanitized = sanitized.replace(char, "")
     
     return sanitized.strip()
+
+
+def generate_random_password(length: int = 8) -> str:
+    """
+    Generar contraseña aleatoria con:
+    - Mayúscula, minúscula, número garantizados
+    - Sin caracteres ambiguos (0, O, I, l, 1)
+    """
+    uppercase = secrets.choice(string.ascii_uppercase.translate(str.maketrans("", "", "IO")))
+    lowercase = secrets.choice(string.ascii_lowercase.translate(str.maketrans("", "", "lo")))
+    digit = secrets.choice(string.digits.translate(str.maketrans("", "", "01")))
+
+    safe_chars = (
+        string.ascii_uppercase.translate(str.maketrans("", "", "IO"))
+        + string.ascii_lowercase.translate(str.maketrans("", "", "lo"))
+        + string.digits.translate(str.maketrans("", "", "01"))
+    )
+
+    rest = ''.join(secrets.choice(safe_chars) for _ in range(length - 3))
+
+    combined = list(uppercase + lowercase + digit + rest)
+    secrets.SystemRandom().shuffle(combined)
+
+    return ''.join(combined)

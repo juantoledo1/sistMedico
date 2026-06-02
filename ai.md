@@ -954,7 +954,65 @@ Dentro de una guardia, el médico puede agregar procedimientos o interconsultas 
 
 ---
 
-*Última actualización: 2026-05-13*
-*Pruebas realizadas: Login Admin, Listar Usuarios, Toggle Active, Login Bloqueado, Crear Admin, Estados Suscripción, Registro auto-activación, Rate Limiting, Suspendido login bloqueado, CRUD actividades, Calendario integrado en ReportsView, Stats optimizado, Index corregido, CRUD instituciones backend, Métodos Institution frontend, App.tsx integración instituciones, ShiftForm rework (dropdown + tarifas + extras), CalendarView mobile UX + type badges fix + delete confirm*
+---
+
+## 31. Reset de Contraseña desde Admin (2026-05-27)
+
+### Backend
+- **`services/auth.py`**: Nueva función `generate_random_password(length=8)`:
+  - `secrets.choice()` para CSPRNG
+  - Garantiza: 1 mayúscula, 1 minúscula, 1 número
+  - Excluye caracteres ambiguos: `I`, `O`, `l`, `o`, `0`, `1`
+  - Baraja con `secrets.SystemRandom().shuffle()`
+- **`routers/auth.py`**: Nuevo endpoint `POST /api/auth/admin/users/{user_id}/reset-password`:
+  - Protegido por `get_current_user_admin` (solo admin)
+  - Genera password, hashea con BCrypt, actualiza DB
+  - Retorna `{"new_password": "Ab3xK9mP"}` (solo admin ve esto)
+  - Log con email del target + admin que ejecutó
+
+### Frontend
+- **`services/api.ts`**: Nuevo método `resetPassword(userId)` → `POST /admin/users/{id}/reset-password`
+- **`AdminView.tsx`**:
+  - Nuevo botón 🔑 (KeyRound icon) en columna Acciones por cada usuario, entre Toggle y Delete
+  - Modal con:
+    - Icono verde KeyRound
+    - Nombre del usuario
+    - Contraseña en `font-mono` grande (select-all)
+    - Botón "Copiar contraseña" → `navigator.clipboard.writeText()`
+    - Fallback a `document.execCommand('copy')` si clipboard API falla
+    - Feedback visual: "Copiado" con icono check
+    - Click fuera del modal o botón "Cerrar" para cerrar
+  - Confirmación antes de resetear
+
+### Fix adicional
+- **`translations.ts`**: Eliminado duplicado `iniciarSesion: "Sign in"` línea 182 (ya existía en línea 161). Build sin warnings.
+
+---
+
+---
+
+## 32. Cambiar Contraseña desde Perfil (Médico) — 2026-05-27
+
+### Frontend — `SettingsView.tsx`
+- Nuevo botón **"Cambiar contraseña"** en sección Perfil (después de Institución Principal)
+- Modal con 3 campos: actual, nueva, confirmar
+- Seguridad:
+  - `autoComplete="off"` en los 3 campos (no autofill)
+  - Input oculto al inicio para confundir password managers
+  - Placeholder "Tu contraseña actual" deja claro que debe tipearse
+  - 👁 Toggle para mostrar/ocultar cada campo
+- Validación client-side: 8 chars, mayúscula, minúscula, número, coincidencia
+- Llama `api.changePassword()` existente
+- Feedback inline: error en rojo, success en verde con cierre automático
+
+### Fix — Refresh Token
+- **`services/api.ts`**: `{ refresh: refreshToken }` → `{ refresh_token: refreshToken }`
+- Alinea el body con el backend (`RefreshTokenRequest.refresh_token`)
+- Soluciona falsos "Sesión expirada" por 422 en refresh
+
+---
+
+*Última actualización: 2026-05-27*
+*Pruebas realizadas: Login Admin, Listar Usuarios, Toggle Active, Login Bloqueado, Crear Admin, Estados Suscripción, Registro auto-activación, Rate Limiting, Suspendido login bloqueado, CRUD actividades, Calendario integrado en ReportsView, Stats optimizado, Index corregido, CRUD instituciones backend, Métodos Institution frontend, App.tsx integración instituciones, ShiftForm rework (dropdown + tarifas + extras), CalendarView mobile UX + type badges fix + delete confirm, Reset de contraseña desde Admin (endpoint POST + frontend modal con copia incluido), Cambiar contraseña desde perfil médico con modal seguro, Fix refresh token (session expired)*
 *Todos los tests PASARON ✅*
-*Completado: Panel Admin con gestión de usuarios, control de acceso y lógica SaaS de suscripción. Registro con auto-activación, validación en tiempo real, fortaleza de contraseña, rate limiting (3/min register, 5/min login). ReportsView con calendario integrado guardias/procedimientos/interconsultas. Backend optimizado con aggregation pipeline e index corregido. CRUD instituciones backend y frontend. Gestión inline desde ShiftForm con dropdown searchable, tarifas auto-fill, add/edit/delete. Actividades extra dentro de guardias. CalendarView mobile UX mejorado: modal 70vh, safe area, badges fijas, delete confirm, touch targets 40px+.*
+*Completado: Panel Admin con gestión de usuarios, control de acceso y lógica SaaS de suscripción. Registro con auto-activación, validación en tiempo real, fortaleza de contraseña, rate limiting (3/min register, 5/min login). ReportsView con calendario integrado guardias/procedimientos/interconsultas. Backend optimizado con aggregation pipeline e index corregido. CRUD instituciones backend y frontend. Gestión inline desde ShiftForm con dropdown searchable, tarifas auto-fill, add/edit/delete. Actividades extra dentro de guardias. CalendarView mobile UX mejorado: modal 70vh, safe area, badges fijas, delete confirm, touch targets 40px+. Reset de contraseña desde Admin: generate_random_password(), endpoint POST, botón KeyRound + modal copy.*

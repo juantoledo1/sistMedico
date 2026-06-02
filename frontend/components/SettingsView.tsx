@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserProfile, UserSettings } from '../types';
-import { User, Globe, Moon, Sun, ChevronRight, Check, Star, Trash2, Bell } from 'lucide-react';
+import { User, Globe, Moon, Sun, ChevronRight, Check, Star, Trash2, Bell, KeyRound, Eye, EyeOff, Loader2, Lock, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { translations } from '../translations';
+import { api } from '../services/api';
 
 interface SettingsViewProps {
   profile: UserProfile;
@@ -10,8 +11,7 @@ interface SettingsViewProps {
   isAdmin?: boolean;
   onUpdateProfile: (profile: Partial<UserProfile>) => void;
   onUpdateSettings: (settings: Partial<UserSettings>) => void;
-  onDeleteFavorite: (inst: string) => void;
-  favorites: string[];
+
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -20,9 +20,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   isAdmin = false,
   onUpdateProfile,
   onUpdateSettings,
-  onDeleteFavorite,
-  favorites
 }) => {
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [currentFocused, setCurrentFocused] = useState(false);
+
   const t = translations[settings.language];
   const avatars = {
     masc_formal: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=256&h=256&auto=format&fit=crop",
@@ -31,6 +41,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     fem_formal: "https://images.unsplash.com/photo-1584432830680-aa991fbdd858?q=80&w=256&h=256&auto=format&fit=crop",
     fem_doctor: "https://images.unsplash.com/photo-1628595351029-c2bf17511435?q=80&w=256&h=256&auto=format&fit=crop",
     fem_scrubs: "https://images.unsplash.com/photo-1551076805-e1869033e561?q=80&w=256&h=256&auto=format&fit=crop",
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!currentPassword) { setPasswordError('Ingresá tu contraseña actual'); return; }
+    if (!newPassword) { setPasswordError('Ingresá una nueva contraseña'); return; }
+    if (newPassword.length < 8) { setPasswordError('Mínimo 8 caracteres'); return; }
+    if (!/[A-Z]/.test(newPassword)) { setPasswordError('Al menos una mayúscula'); return; }
+    if (!/[a-z]/.test(newPassword)) { setPasswordError('Al menos una minúscula'); return; }
+    if (!/[0-9]/.test(newPassword)) { setPasswordError('Al menos un número'); return; }
+    if (newPassword !== confirmPassword) { setPasswordError('Las contraseñas no coinciden'); return; }
+
+    try {
+      setChangingPassword(true);
+      await api.changePassword(currentPassword, newPassword);
+      setPasswordSuccess('Contraseña actualizada correctamente');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setShowChangePassword(false), 1500);
+    } catch (e) {
+      setPasswordError(e instanceof Error ? e.message : 'Error al cambiar contraseña');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -83,62 +120,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">{t.nombreCompleto}</label>
-                <input 
-                  type="text" 
-                  value={profile.name}
-                  onChange={(e) => onUpdateProfile({ name: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 rounded-2xl px-5 py-4 text-slate-900 dark:text-white font-black tracking-tight focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all outline-none"
-                  placeholder="Ej. Dr. García"
-                />
+                <p className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 rounded-2xl px-5 py-4 text-slate-900 dark:text-white font-black tracking-tight">
+                  {profile.name}
+                </p>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">{t.especialidad}</label>
-                <input 
-                  type="text" 
-                  value={profile.specialty}
-                  onChange={(e) => onUpdateProfile({ specialty: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 rounded-2xl px-5 py-4 text-slate-900 dark:text-white font-black tracking-tight focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all outline-none"
-                  placeholder="Ej. Cardiología"
-                />
+                <p className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 rounded-2xl px-5 py-4 text-slate-900 dark:text-white font-black tracking-tight">
+                  {profile.specialty}
+                </p>
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1">INSTITUCIÓN PRINCIPAL</label>
-              <input 
-                type="text" 
-                value={profile.institution}
-                onChange={(e) => onUpdateProfile({ institution: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 rounded-2xl px-5 py-4 text-slate-900 dark:text-white font-black tracking-tight focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all outline-none"
-                placeholder="Ej. Hospital Central"
-              />
-            </div>
+            <button
+              onClick={() => { setShowChangePassword(true); setPasswordError(''); setPasswordSuccess(''); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setCurrentFocused(false); }}
+              className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group border border-transparent hover:border-blue-200 dark:hover:border-blue-800"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className="font-bold text-slate-700 dark:text-slate-200">Cambiar contraseña</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600" />
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Persistence Management */}
-      <section className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/30 dark:shadow-none">
-        <div className="flex items-center gap-2 mb-6">
-          <Star className="w-5 h-5 text-amber-500" />
-          <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{t.instFavoritas}</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {favorites.map(fav => (
-            <div key={fav} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl group border border-transparent hover:border-blue-100 dark:hover:border-blue-900 transition-all">
-              <span className="font-bold text-slate-700 dark:text-slate-200">{fav}</span>
-              <button 
-                onClick={() => onDeleteFavorite(fav)}
-                className="text-slate-300 hover:text-red-500 transition-colors p-2"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          {favorites.length === 0 && (
-            <p className="text-sm text-slate-400 font-medium p-4 italic">No hay instituciones favoritas aún.</p>
-          )}
-        </div>
-      </section>
       </>)}
 
       {/* Preferences */}
@@ -173,6 +181,120 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="text-center pt-4">
         <p className="text-slate-400 text-xs font-medium">MedFlow Pro v1.0.5 • © 2026</p>
       </div>
+
+      {showChangePassword && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowChangePassword(false)}>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Cambiar contraseña</h3>
+                <p className="text-xs text-slate-400">Ingresá tu contraseña actual y una nueva</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <input type="text" style={{display: 'none'}} autoComplete="off" />
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-1">Contraseña actual</label>
+                <div className="relative">
+                  <input
+                    type={showCurrent ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={e => { setCurrentPassword(e.target.value); setCurrentFocused(true); }}
+                    onFocus={() => setCurrentFocused(true)}
+                    readOnly={!currentFocused && currentPassword === ''}
+                    autoComplete="off"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all outline-none pr-10"
+                    placeholder="Tu contraseña actual"
+                  />
+                  <button
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-1">Nueva contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showNew ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    autoComplete="off"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all outline-none pr-10"
+                    placeholder="Mín. 8 caracteres"
+                  />
+                  <button
+                    onClick={() => setShowNew(!showNew)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-1">Confirmar nueva contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    autoComplete="off"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all outline-none pr-10"
+                    placeholder="Repetí la nueva contraseña"
+                  />
+                  <button
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {passwordError && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                  <p className="text-sm text-red-700 dark:text-red-400">{passwordError}</p>
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                  <Check className="w-4 h-4 text-green-500 shrink-0" />
+                  <p className="text-sm text-green-700 dark:text-green-400">{passwordSuccess}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowChangePassword(false)}
+                className="flex-1 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={changingPassword}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                {changingPassword ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : null}
+                Cambiar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -182,19 +304,19 @@ const SettingItem = ({ icon, label, value, onClick, disabled = false }: any) => 
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      "w-full flex items-center justify-between p-4 rounded-2xl transition-all",
+      "w-full flex items-center justify-between p-4 rounded-2xl transition-all overflow-hidden",
       disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50 dark:hover:bg-slate-900 group"
     )}
   >
-    <div className="flex items-center gap-4">
-      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors">
+    <div className="flex items-center gap-4 min-w-0">
+      <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors shrink-0">
         {icon}
       </div>
-      <span className="font-bold text-slate-700 dark:text-slate-200">{label}</span>
+      <span className="font-bold text-slate-700 dark:text-slate-200 truncate">{label}</span>
     </div>
     <div className="flex items-center gap-2">
-      <span className="text-sm font-semibold text-slate-400 dark:text-slate-500">{value}</span>
-      <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600" />
+      <span className="text-sm font-semibold text-slate-400 dark:text-slate-500 truncate max-w-[120px]">{value}</span>
+      <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
     </div>
   </button>
 );

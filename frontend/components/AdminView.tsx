@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../services/api";
 import { UserSettings } from "../types";
-import { ArrowLeft, Search, Loader2, AlertTriangle, Shield, Mail, Phone, Trash2, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Search, Loader2, AlertTriangle, Shield, Mail, Phone, Trash2, Eye, EyeOff, KeyRound, Check, Copy } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -44,6 +44,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ settings, onBack }) => {
   const [filter, setFilter] = useState<string>("all");
   const [toggling, setToggling] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [resetting, setResetting] = useState<string | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [passwordUserName, setPasswordUserName] = useState("");
+  const [passwordUserEmail, setPasswordUserEmail] = useState("");
+  const [passwordCopied, setPasswordCopied] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmData, setConfirmData] = useState<{
+    id: string;
+    name: string;
+    email: string;
+  } | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -95,6 +107,45 @@ export const AdminView: React.FC<AdminViewProps> = ({ settings, onBack }) => {
       alert(e instanceof Error ? e.message : "Error al eliminar usuario");
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleResetPassword = (user: AdminUser) => {
+    setConfirmData({ id: user.id, name: user.full_name || user.email, email: user.email });
+    setShowConfirmModal(true);
+  };
+
+  const executeResetPassword = async () => {
+    if (!confirmData) return;
+    setShowConfirmModal(false);
+    try {
+      setResetting(confirmData.id);
+      const result = await api.resetPassword(confirmData.id);
+      setGeneratedPassword(result.new_password);
+      setPasswordUserName(confirmData.name);
+      setPasswordUserEmail(confirmData.email);
+      setPasswordCopied(false);
+      setShowPasswordModal(true);
+    } catch (e) {
+      console.error("Error resetting password:", e);
+      alert(e instanceof Error ? e.message : "Error al resetear contraseña");
+    } finally {
+      setResetting(null);
+    }
+  };
+
+  const copyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPassword);
+      setPasswordCopied(true);
+    } catch {
+      const el = document.createElement('textarea');
+      el.value = generatedPassword;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setPasswordCopied(true);
     }
   };
 
@@ -253,6 +304,18 @@ export const AdminView: React.FC<AdminViewProps> = ({ settings, onBack }) => {
                             )}
                           </button>
                           <button
+                            onClick={() => handleResetPassword(user)}
+                            disabled={resetting === user.id}
+                            className="p-2 rounded-xl text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all disabled:opacity-50"
+                            title="Resetear contraseña"
+                          >
+                            {resetting === user.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <KeyRound className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
                             onClick={() => handleDelete(user.id)}
                             disabled={deleting === user.id}
                             className="p-2 rounded-xl text-red-400 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50"
@@ -272,6 +335,68 @@ export const AdminView: React.FC<AdminViewProps> = ({ settings, onBack }) => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {showConfirmModal && confirmData && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-7 h-7 text-red-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Resetear contraseña</h3>
+            <p className="text-sm text-slate-500 mb-4">Vas a resetear la contraseña de:</p>
+            <div className="bg-slate-50 rounded-xl p-4 mb-5">
+              <p className="font-bold text-slate-900 text-base">{confirmData.name}</p>
+              <p className="text-sm text-slate-500 mt-1">{confirmData.email}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowConfirmModal(false); setConfirmData(null); }}
+                className="flex-1 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executeResetPassword}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all"
+              >
+                Sí, resetear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <KeyRound className="w-7 h-7 text-green-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Contraseña generada</h3>
+            <p className="font-semibold text-slate-900">{passwordUserName}</p>
+            <p className="text-xs text-slate-400 mb-5">{passwordUserEmail}</p>
+            <div className="bg-slate-100 rounded-xl p-4 mb-5">
+              <span className="text-2xl font-mono font-bold text-slate-900 tracking-widest select-all">
+                {generatedPassword}
+              </span>
+            </div>
+            <button
+              onClick={copyPassword}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              {passwordCopied ? (
+                <><Check className="w-5 h-5" /> Copiado</>
+              ) : (
+                <><Copy className="w-5 h-5" /> Copiar contraseña</>
+              )}
+            </button>
+            <button
+              onClick={() => setShowPasswordModal(false)}
+              className="w-full py-2 mt-2 text-sm text-slate-500 hover:text-slate-700 font-medium"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       )}
     </div>

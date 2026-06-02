@@ -351,66 +351,66 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ transactions, settings
 
       {/* Main Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg overflow-hidden">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
               <TrendingUp className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-slate-400 uppercase">Total</span>
           </div>
-          <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(totalInvoiced)}</p>
+          <p className="text-base md:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white truncate">{formatCurrency(totalInvoiced)}</p>
         </div>
         
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg overflow-hidden">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0">
               <Clock className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-slate-400 uppercase">Guardias</span>
           </div>
-          <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(totalGuardias)}</p>
+          <p className="text-base md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white truncate">{formatCurrency(totalGuardias)}</p>
         </div>
         
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg overflow-hidden">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center shrink-0">
               <Stethoscope className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-slate-400 uppercase">Proced.</span>
           </div>
-          <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(totalProcedimientos)}</p>
+          <p className="text-base md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white truncate">{formatCurrency(totalProcedimientos)}</p>
         </div>
         
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg">
+        <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg overflow-hidden">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-green-50 text-green-600 rounded-lg flex items-center justify-center shrink-0">
               <UserCheck className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-slate-400 uppercase">Intercons.</span>
           </div>
-          <p className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(totalInterconsultas)}</p>
+          <p className="text-base md:text-xl lg:text-2xl font-black text-slate-900 dark:text-white truncate">{formatCurrency(totalInterconsultas)}</p>
         </div>
       </div>
 
       {/* Paid/Pending */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-green-600 p-6 rounded-2xl text-white shadow-xl">
+        <div className="bg-green-600 p-6 rounded-2xl text-white shadow-xl overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
-            <BarChart3 className="w-5 h-5" />
+            <BarChart3 className="w-5 h-5 shrink-0" />
             <span className="text-xs font-bold uppercase opacity-70">Cobrado</span>
           </div>
-          <p className="text-3xl font-black">{formatCurrency(totalPaid)}</p>
+          <p className="text-xl md:text-2xl lg:text-3xl font-black truncate">{formatCurrency(totalPaid)}</p>
           <p className="text-xs mt-2 opacity-60">
             {filteredActividades.filter(a => a.status === PaymentStatus.PAID).length} actividades cobradas
           </p>
         </div>
         
-        <div className="bg-orange-500 p-6 rounded-2xl text-white shadow-xl">
+        <div className="bg-orange-500 p-6 rounded-2xl text-white shadow-xl overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-5 h-5" />
+            <Clock className="w-5 h-5 shrink-0" />
             <span className="text-xs font-bold uppercase opacity-70">Pendiente</span>
           </div>
-          <p className="text-3xl font-black">{formatCurrency(totalPending)}</p>
+          <p className="text-xl md:text-2xl lg:text-3xl font-black truncate">{formatCurrency(totalPending)}</p>
           <p className="text-xs mt-2 opacity-60">
             {filteredActividades.filter(a => a.status === PaymentStatus.PENDING).length} actividades pendientes
           </p>

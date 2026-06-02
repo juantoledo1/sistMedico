@@ -34,6 +34,24 @@ class APIService {
         body: options.body ? JSON.stringify(options.body) : undefined,
       });
 
+      if (response.status === 401 && endpoint !== '/api/auth/refresh') {
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          const newToken = this.getToken();
+          headers['Authorization'] = `Bearer ${newToken}`;
+          const retryResponse = await fetch(url, {
+            method: options.method || 'GET',
+            headers,
+            body: options.body ? JSON.stringify(options.body) : undefined,
+          });
+          if (retryResponse.ok) {
+            return retryResponse.json();
+          }
+        }
+        window.dispatchEvent(new CustomEvent('sessionExpired'));
+        throw new Error('Sesión expirada');
+      }
+
       if (!response.ok) {
         const contentType = response.headers.get('content-type') || '';
         console.log(`[API] Error ${response.status}:`, contentType);
@@ -51,6 +69,31 @@ class APIService {
     } catch (err) {
       console.error(`[API] Error en ${endpoint}:`, err);
       throw err;
+    }
+  }
+
+  private async refreshToken(): Promise<boolean> {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) return false;
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.access_token) {
+          localStorage.setItem('access_token', data.access_token);
+          if (data.refresh_token) {
+            localStorage.setItem('refresh_token', data.refresh_token);
+          }
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
     }
   }
 
@@ -134,6 +177,10 @@ class APIService {
     start_time?: string;
     end_time?: string;
     end_date?: string;
+    procedure_name?: string;
+    quantity?: number;
+    unit_value?: number;
+    specialty?: string;
   }) {
     return this.request<any>('/api/actividades/', {
       method: 'POST',
@@ -184,6 +231,12 @@ class APIService {
     return this.request<any>(`/api/auth/admin/users/${userId}`, {
       method: 'PUT',
       body: data,
+    });
+  }
+
+  async resetPassword(userId: string) {
+    return this.request<{new_password: string}>(`/api/auth/admin/users/${userId}/reset-password`, {
+      method: 'POST',
     });
   }
 

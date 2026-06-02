@@ -102,36 +102,6 @@ async def crear_actividad(
     doc["_id"] = str(result.inserted_id)
     doc["userId"] = user_id
 
-    # Auto-guardar/actualizar tarifa de institución
-    try:
-        rate = None
-        if actividad.type == ActivityType.GUARDIA:
-            rate = actividad.hourly_rate
-        elif actividad.type == ActivityType.PROCEDIMIENTO:
-            rate = actividad.unit_value
-        elif actividad.type == ActivityType.INTERCONSULTA:
-            rate = actividad.amount
-
-        if rate and rate > 0:
-            inst = await db.institutions.find_one({"userId": user_id, "name": actividad.institution})
-            rate_field = f"{actividad.type.value}_rate"
-            if inst:
-                await db.institutions.update_one(
-                    {"_id": inst["_id"]},
-                    {"$set": {rate_field: rate, "updated_at": datetime.utcnow()}}
-                )
-            else:
-                await db.institutions.insert_one({
-                    "userId": user_id,
-                    "name": actividad.institution,
-                    rate_field: rate,
-                    "is_active": True,
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
-                })
-    except Exception as e:
-        logger.warning(f"⚠️ No se pudo guardar tarifa de institución: {e}")
-
     logger.info(f"✅ Actividad creada: {actividad.type} por usuario {user_id}")
     return doc
 

@@ -86,7 +86,9 @@ salida: "Salida",
     requisitoMinuscula: "Una minúscula",
     requisitoNumero: "Un número",
     nombreRequerido: "El nombre es obligatorio",
-    emailInvalido: "Email inválido"
+    emailInvalido: "Email inválido",
+    sessionExpired: "Sesión expirada",
+    sessionExpiredDesc: "Tu sesión venció. Por seguridad, volvé a iniciar sesión."
   },
   en: {
     inicio: "Home",
@@ -174,7 +176,9 @@ salida: "Salida",
     requisitoMinuscula: "One lowercase",
     requisitoNumero: "One number",
     nombreRequerido: "Name is required",
-    emailInvalido: "Invalid email"
+    emailInvalido: "Invalid email",
+    sessionExpired: "Session expired",
+    sessionExpiredDesc: "Your session has expired. Please sign in again to continue."
   }
 };
 

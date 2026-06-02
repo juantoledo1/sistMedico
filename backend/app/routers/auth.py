@@ -14,12 +14,14 @@ from app.config import settings
 from app.limiter import limiter
 from app.models.user import (
     UserCreate, UserResponse, LoginRequest, 
-    TokenResponse, MessageResponse, ErrorResponse, UserListResponse, ToggleActiveRequest
+    TokenResponse, MessageResponse, ErrorResponse, UserListResponse, ToggleActiveRequest,
+    RefreshTokenRequest
 )
 from app.services.auth import (
     hash_password, verify_password,
     create_access_token, create_refresh_token, decode_token,
-    authenticate_user, create_user, validate_password_strength
+    authenticate_user, create_user, validate_password_strength,
+    generate_random_password
 )
 from app.db.mongo import get_database
 
@@ -198,15 +200,18 @@ async def login(request: Request, credentials: LoginRequest, db: AsyncIOMotorDat
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(refresh: str, db: AsyncIOMotorDatabase = Depends(get_database)):
+async def refresh_token(refresh: RefreshTokenRequest, db: AsyncIOMotorDatabase = Depends(get_database)):
     """Renovar access token usando refresh token"""
-    payload = decode_token(refresh)
+    payload = decode_token(refresh.refresh_token)
     
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Refresh token inválido")
     
     user_id = payload.get("sub")
-    user = await db.users.find_one({"_id": user_id})
+    try:
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+    except Exception:
+        user = await db.users.find_one({"_id": user_id})
     
     if not user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
@@ -225,7 +230,7 @@ async def refresh_token(refresh: str, db: AsyncIOMotorDatabase = Depends(get_dat
     
     return TokenResponse(
         access_token=access_token,
-        refresh_token=refresh_token,
+        refresh_token=refresh.refresh_token,
         token_type="bearer",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
@@ -579,6 +584,36 @@ async def toggle_user_active(
     logger.info(f"✅ Usuario {target['email']} status={new_status} is_active={data.is_active}")
     
     return {"id": str(target["_id"]), "status": new_status, "is_active": data.is_active}
+
+
+# ==================== RESET PASSWORD (ADMIN) ====================
+
+@router.post("/admin/users/{user_id}/reset-password")
+async def admin_reset_password(
+    user_id: str,
+    current_user: dict = Depends(get_current_user_admin),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Resetear contraseña de usuario - SOLO ADMIN (retorna nueva contraseña en texto plano)"""
+    try:
+        target = await db.users.find_one({"_id": ObjectId(user_id)})
+    except Exception:
+        target = await db.users.find_one({"_id": user_id})
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    new_password = generate_random_password()
+    new_hash = hash_password(new_password)
+
+    await db.users.update_one(
+        {"_id": target["_id"]},
+        {"$set": {"password_hash": new_hash, "updated_at": datetime.utcnow()}}
+    )
+
+    logger.info(f"🔑 Contraseña reseteada: {target['email']} por admin {current_user.get('email')}")
+
+    return {"new_password": new_password}
 
 
 # ==================== CREAR ADMIN ====================

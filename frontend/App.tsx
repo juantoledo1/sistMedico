@@ -34,6 +34,7 @@ import {
   Eye,
   EyeOff,
   Shield,
+  Clock,
 } from "lucide-react";
 import { cn } from "./lib/utils";
 
@@ -57,12 +58,6 @@ const App: React.FC = () => {
   const [insight, setInsight] = useState<string>("Analizando tus finanzas...");
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([
-    "Hospital Italiano",
-    "Sanatorio Güemes",
-    "Clínica Olivos",
-    "H. Británico",
-  ]);
   const [defaultFormType, setDefaultFormType] = useState<
     "guardia" | "procedimiento" | "interconsulta"
   >("guardia");
@@ -85,10 +80,17 @@ const App: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeView]);
+
+  useEffect(() => {
+    const handler = () => setSessionExpired(true);
+    window.addEventListener('sessionExpired', handler);
+    return () => window.removeEventListener('sessionExpired', handler);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -273,12 +275,13 @@ const App: React.FC = () => {
               ? Math.round(newTx.amount / newTx.duration)
               : undefined,
           notes: newTx.notes,
+          status: newTx.status,
           start_time: newTx.startTime,
           end_time: newTx.endTime,
           end_date: newTx.endDate,
         });
         setTransactions(
-          transactions.map((tx) =>
+          prev => prev.map((tx) =>
             tx.id === editingTransaction.id
               ? ({
                   ...tx,
@@ -286,6 +289,7 @@ const App: React.FC = () => {
                   date: updated.date,
                   amount: updated.amount,
                   notes: updated.notes,
+                  status: updated.status,
                   startTime: updated.start_time || undefined,
                   endTime: updated.end_time || undefined,
                   endDate: updated.end_date || undefined,
@@ -313,6 +317,10 @@ const App: React.FC = () => {
           start_time: newTx.startTime,
           end_time: newTx.endTime,
           end_date: newTx.endDate,
+          procedure_name: newTx.procedureName,
+          quantity: newTx.quantity,
+          unit_value: newTx.unitValue,
+          specialty: newTx.specialty,
         });
         const tx: Transaction = {
           id: created._id,
@@ -328,14 +336,11 @@ const App: React.FC = () => {
           duration: created.hours,
           location: created.institution,
         };
-        setTransactions([tx, ...transactions]);
-
-        if (newTx.institution && !favorites.includes(newTx.institution)) {
-          setFavorites([newTx.institution, ...favorites].slice(0, 6));
-        }
+        setTransactions(prev => [tx, ...prev]);
       }
     } catch (error) {
       console.error("Error saving:", error);
+      alert("Error al guardar: " + (error instanceof Error ? error.message : "Error desconocido"));
     }
 
   };
@@ -343,7 +348,7 @@ const App: React.FC = () => {
   const handleDeleteTransaction = async (id: string) => {
     try {
       await api.deleteActividad(id);
-      setTransactions(transactions.filter((t) => t.id !== id));
+      setTransactions(prev => prev.filter((t) => t.id !== id));
     } catch (error) {
       console.error("Error deleting:", error);
     }
@@ -548,10 +553,6 @@ if (isLoading) {
               isAdmin={isAdmin}
               onUpdateProfile={(p) => setProfile({ ...profile, ...p })}
               onUpdateSettings={(s) => setSettings({ ...settings, ...s })}
-              onDeleteFavorite={(inst) =>
-                setFavorites(favorites.filter((f) => f !== inst))
-              }
-              favorites={favorites}
             />
           )}
           {activeView === "admin" && (
@@ -609,6 +610,13 @@ if (isLoading) {
               label={t.ajustes}
               icon={<Settings className="w-5 h-5" />}
             />
+            <button
+              onClick={handleLogout}
+              className="flex flex-col items-center gap-1 px-3 py-2 text-[9px] font-bold text-slate-400 hover:text-red-500 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Salir</span>
+            </button>
           </div>
         </nav>
       </main>
@@ -625,13 +633,37 @@ if (isLoading) {
           initialDate={prefilledDate}
           editingTransaction={editingTransaction || undefined}
           transactions={transactions}
-          favorites={favorites}
           settings={settings}
           defaultType={defaultFormType}
           institutions={institutions}
           onInstitutionChange={handleInstitutionChange}
           onInstitutionDelete={handleInstitutionDelete}
         />
+      )}
+
+      {/* Session Expired Modal */}
+      {sessionExpired && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[200] flex items-center justify-center">
+          <div className="bg-white dark:bg-slate-900 w-[90%] max-w-sm rounded-3xl p-8 shadow-2xl text-center space-y-6">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
+              <Clock className="w-8 h-8 text-red-500" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                Sesión expirada
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                Tu sesión venció. Por seguridad, volvé a iniciar sesión.
+              </p>
+            </div>
+            <button
+              onClick={() => { handleLogout(); setSessionExpired(false); }}
+              className="w-full py-3 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 transition-all active:scale-[0.98]"
+            >
+              Iniciar sesión
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

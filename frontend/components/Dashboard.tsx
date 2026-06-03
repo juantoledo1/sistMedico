@@ -122,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
             <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full z-20"></div>
           </div>
           <div>
-            <h1 className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">{t.hola}, {userProfile.name}</h1>
+            <h1 className={cn("text-xl lg:text-2xl font-black leading-tight tracking-tight", settings.darkMode ? "text-white" : "text-slate-900")}>{t.hola}, {userProfile.name}</h1>
             <p className="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">{userProfile.specialty}</p>
           </div>
         </div>
@@ -244,7 +244,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
         <div className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/40 dark:shadow-none">
           <div className="flex items-center justify-between mb-6 lg:mb-8">
             <div>
-              <h2 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{t.rendimiento}</h2>
+              <h2 className={cn("text-lg lg:text-xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.rendimiento}</h2>
               <p className="text-[9px] lg:text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1 lg:mt-2">
                 {`Año ${year}`}
               </p>

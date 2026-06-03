@@ -292,7 +292,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ transactions, settings
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t.guardias || 'Guardias'}</h1>
+            <h1 className={cn("text-2xl lg:text-3xl font-black tracking-tight", settings.darkMode ? "text-white" : "text-slate-900")}>{t.guardias || 'Guardias'}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Análisis detallado de tu actividad profesional.</p>
           </div>
         </div>

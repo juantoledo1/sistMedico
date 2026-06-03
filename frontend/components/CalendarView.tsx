@@ -323,7 +323,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ transactions, onOpen
     <div className="p-4 lg:p-10 max-w-7xl mx-auto space-y-6 lg:space-y-8 animate-in fade-in duration-500 pb-32">
       <header className="hidden lg:flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{t.turnos}</h1>
+          <h1 className={cn("text-3xl lg:text-4xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.turnos}</h1>
           <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] lg:text-[10px] mt-2 opacity-60">
             {format(currentDate, 'MMMM yyyy', { locale })}
           </p>

@@ -73,7 +73,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="p-4 lg:p-10 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32">
       <header className="space-y-1">
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{t.ajustes}</h1>
+        <h1 className={cn("text-3xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.ajustes}</h1>
         <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] opacity-60 leading-none">{t.preferencias}</p>
       </header>
 
@@ -82,7 +82,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/30 dark:shadow-none animate-in slide-in-from-bottom-2 duration-300">
         <div className="flex items-center gap-2 mb-6">
           <User className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{t.perfilAvatar}</h2>
+          <h2 className={cn("text-lg font-black tracking-tight", settings.darkMode ? "text-white" : "text-slate-900")}>{t.perfilAvatar}</h2>
         </div>
 
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-10">
@@ -153,7 +153,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <section className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/40 dark:shadow-none">
         <div className="flex items-center gap-2 mb-6">
           <Globe className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.preferencias}</h2>
+          <h2 className={cn("text-lg font-bold", settings.darkMode ? "text-white" : "text-slate-900")}>{t.preferencias}</h2>
         </div>
 
         <div className="space-y-4">

@@ -61,10 +61,7 @@ docker run -d --name medflow-api -p 8000:8000 --network host -e MONGO_URI="mongo
 cd frontend && npm install && npm run dev
 ```
 
-
-MONGO_URI=mongodb://localhost:27017/medflow
-SECRET_KEY=tu-key-secreta-min-32-caracteres
-```
+Ver plantilla en `.env.example` (NO subir `.env` a git).
 
 ## Licencia
 

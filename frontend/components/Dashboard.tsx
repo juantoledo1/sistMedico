@@ -12,7 +12,9 @@ import {
   PieChart,
   Clock,
   X,
-  Filter
+  Filter,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { cn, formatCurrency, formatCurrencyFull } from '../lib/utils';
 import { translations } from '../translations';
@@ -30,6 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
   const t = translations[settings.language];
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [year, setYear] = useState(new Date().getFullYear());
   
   const currentMonthTotal = transactions.reduce((acc, tran) => {
     return acc + tran.amount;
@@ -75,11 +78,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
 
   const avatarUrl = avatars[userProfile.avatar] || avatars.masc_doctor;
 
-  const getMonthlyPerformance = () => {
+  const getMonthlyPerformance = (yr: number) => {
     const months = [];
-    const date = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(date.getFullYear(), date.getMonth() - i, 1);
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(yr, i, 1);
       const label = d.toLocaleString(settings.language === 'es' ? 'es-AR' : 'en-US', { month: 'short' });
       const monthYear = format(d, 'yyyy-MM');
       
@@ -87,16 +89,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
         .filter(t => t.date.startsWith(monthYear))
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const baseValues = [450000, 380000, 520000, 410000, 580000, 620000];
-      const value = monthTotal || baseValues[5 - i] || 0;
-      
-      months.push({ label, value });
+      months.push({ label, value: monthTotal });
     }
     return months;
   };
 
-  const monthlyData = getMonthlyPerformance();
+  const monthlyData = getMonthlyPerformance(year);
+  const annualTotal = monthlyData.reduce((s, m) => s + m.value, 0);
   const maxVal = Math.max(...monthlyData.map(d => d.value), 1000);
+  const currentMonth = new Date().getMonth();
   const goal = 1000000;
 
   const filteredTransactions = searchQuery
@@ -241,10 +242,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
       {/* Chart and History Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         <div className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/40 dark:shadow-none">
-          <div className="flex justify-between items-center mb-6 lg:mb-8">
+          <div className="flex items-center justify-between mb-6 lg:mb-8">
             <div>
               <h2 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{t.rendimiento}</h2>
-              <p className="text-[9px] lg:text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1 lg:mt-2">{t.ultimos6meses}</p>
+              <p className="text-[9px] lg:text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1 lg:mt-2">
+                {`Año ${year}`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setYear(y => y - 1)} className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center transition-all">
+                <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+              </button>
+              <span className="text-sm lg:text-base font-black text-slate-900 dark:text-white min-w-[50px] text-center">{year}</span>
+              <button onClick={() => setYear(y => y + 1)} disabled={year >= new Date().getFullYear()} className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+              </button>
             </div>
           </div>
           
@@ -257,24 +269,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
             </div>
             
             {/* Chart Bars */}
-            <div className="flex items-end justify-between h-40 lg:h-56 gap-2 lg:gap-3 pl-10">
+            <div className="flex items-end justify-between h-40 lg:h-56 gap-0.5 lg:gap-2 pl-10">
               {monthlyData.map((d, i) => {
                 const height = (d.value / maxVal) * 100;
                 return (
-                  <div key={i} className="flex flex-col items-center gap-2 w-full group relative">
+                  <div key={i} className="flex flex-col items-center gap-0.5 lg:gap-2 w-full group relative">
                     <div className="absolute -top-8 lg:-top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 dark:bg-slate-700 text-white text-[10px] lg:text-xs font-bold px-2 py-1 rounded-lg z-20 pointer-events-none whitespace-nowrap shadow-lg">
                       {d.label}: {formatCurrency(d.value)}
                     </div>
                     <div 
                       className={cn(
                         "w-full rounded-xl lg:rounded-2xl transition-all duration-500 relative overflow-hidden",
-                        i === 5 ? 'bg-blue-600 shadow-lg shadow-blue-100 dark:shadow-none' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'
+                        i === currentMonth && year === new Date().getFullYear() ? 'bg-blue-600 shadow-lg shadow-blue-100 dark:shadow-none' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'
                       )} 
                       style={{ height: `${Math.max(height, 2)}%` }}
                     />
                     <span className={cn(
                       "text-[9px] lg:text-[10px] font-medium lg:font-bold uppercase tracking-widest transition-colors",
-                      i === 5 ? 'text-blue-600 scale-110' : 'text-slate-400'
+                      i === currentMonth && year === new Date().getFullYear() ? 'text-blue-600 scale-110' : 'text-slate-400'
                     )}>
                       {d.label}
                     </span>

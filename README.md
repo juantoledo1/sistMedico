@@ -16,8 +16,7 @@ sist_med/
 ├── frontend/     # React app
 ├── backend/      # FastAPI app
 ├── docker/       # Docker configs
-├── .env         # Variables de entorno (NUNCA subir a git)
-└── .gitignore  # Archivos a ignorar
+
 ```
 
 ## Seguridad
@@ -62,10 +61,7 @@ docker run -d --name medflow-api -p 8000:8000 --network host -e MONGO_URI="mongo
 cd frontend && npm install && npm run dev
 ```
 
-### Variables de Entorno
 
-`.env` (NUNCA subir a git):
-```
 MONGO_URI=mongodb://localhost:27017/medflow
 SECRET_KEY=tu-key-secreta-min-32-caracteres
 ```

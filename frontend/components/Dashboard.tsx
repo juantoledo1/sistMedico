@@ -71,7 +71,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
     masc_formal: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=256&h=256&auto=format&fit=crop",
     masc_doctor: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=256&h=256&auto=format&fit=crop",
     masc_scrubs: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=256&h=256&auto=format&fit=crop",
-    fem_formal: "https://images.unsplash.com/photo-1584432830680-aa991fbdd858?q=80&w=256&h=256&auto=format&fit=crop",
+    fem_formal: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=256&h=256&auto=format&fit=crop",
     fem_doctor: "https://images.unsplash.com/photo-1628595351029-c2bf17511435?q=80&w=256&h=256&auto=format&fit=crop",
     fem_scrubs: "https://images.unsplash.com/photo-1551076805-e1869033e561?q=80&w=256&h=256&auto=format&fit=crop",
   };
@@ -244,7 +244,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
         <div className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-2xl lg:rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-xl shadow-slate-100/40 dark:shadow-none">
           <div className="flex items-center justify-between mb-6 lg:mb-8">
             <div>
-              <h2 className={cn("text-lg lg:text-xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.rendimiento}</h2>
+              <h2 className={cn("text-lg lg:text-xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900", "dark:text-white")}>{t.rendimiento}</h2>
               <p className="text-[9px] lg:text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1 lg:mt-2">
                 {`Año ${year}`}
               </p>

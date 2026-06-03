@@ -350,6 +350,7 @@ async def get_me(current_user: dict = Depends(get_current_user), db: AsyncIOMoto
         "full_name": user.get("full_name"),
         "specialty": user.get("specialty"),
         "institution": user.get("institution"),
+        "avatar": user.get("avatar"),
         "is_admin": user.get("is_admin", False),
         "status": user.get("status", "active"),
         "is_active": user.get("is_active", True),
@@ -365,7 +366,7 @@ async def update_me(
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Actualizar datos del perfil - Solo campos permitidos"""
-    allowed_fields = {"full_name", "specialty", "institution"}
+    allowed_fields = {"full_name", "specialty", "institution", "avatar"}
     update_data = {k: v for k, v in updates.items() if k in allowed_fields}
     
     if not update_data:
@@ -378,7 +379,7 @@ async def update_me(
     
     result = await db.users.update_one(query, {"$set": update_data})
     
-    if result.modified_count == 0:
+    if result.matched_count == 0:
         raise HTTPException(404, detail="Usuario no encontrado")
     
     try:
@@ -393,7 +394,8 @@ async def update_me(
         "email": user["email"],
         "full_name": user.get("full_name"),
         "specialty": user.get("specialty"),
-        "institution": user.get("institution")
+        "institution": user.get("institution"),
+        "avatar": user.get("avatar")
     }
 
 

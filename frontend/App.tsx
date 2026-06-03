@@ -157,7 +157,7 @@ const App: React.FC = () => {
           name: userProfile.full_name || "Dr. Usuario",
           specialty: userProfile.specialty || "Medicina",
           institution: userProfile.institution || "",
-          avatar: "neutral",
+          avatar: userProfile.avatar || "masc_doctor",
         });
         setIsAdmin(userProfile.is_admin || false);
         if (userProfile.is_admin) setActiveView("admin");
@@ -551,7 +551,10 @@ if (isLoading) {
               profile={profile}
               settings={settings}
               isAdmin={isAdmin}
-              onUpdateProfile={(p) => setProfile({ ...profile, ...p })}
+              onUpdateProfile={async (p) => {
+                setProfile({ ...profile, ...p });
+                try { await api.updateProfile(p); } catch {}
+              }}
               onUpdateSettings={(s) => setSettings({ ...settings, ...s })}
             />
           )}

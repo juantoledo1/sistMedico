@@ -138,6 +138,7 @@ class APIService {
     full_name?: string;
     specialty?: string;
     institution?: string;
+    avatar?: string;
   }) {
     return this.request<any>('/api/auth/me', {
       method: 'PUT',

@@ -34,7 +34,7 @@ class APIService {
         body: options.body ? JSON.stringify(options.body) : undefined,
       });
 
-      if (response.status === 401 && endpoint !== '/api/auth/refresh') {
+      if (response.status === 401 && endpoint !== '/api/auth/refresh' && endpoint !== '/api/auth/login') {
         const refreshed = await this.refreshToken();
         if (refreshed) {
           const newToken = this.getToken();

@@ -269,26 +269,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
             </div>
             
             {/* Chart Bars */}
-            <div className="flex items-end justify-between h-40 lg:h-56 gap-0.5 lg:gap-2 pl-10">
+            <div className="flex items-end justify-center h-40 lg:h-56 gap-px lg:gap-1 pl-6 lg:pl-10">
               {monthlyData.map((d, i) => {
-                const height = (d.value / maxVal) * 100;
+                const heightPct = (d.value / maxVal) * 100;
+                const barFlex = Math.max(heightPct, 2);
+                const spacerFlex = 100 - barFlex;
                 return (
-                  <div key={i} className="flex flex-col items-center gap-0.5 lg:gap-2 w-full group relative">
+                  <div key={i} className="flex-1 flex flex-col items-center group relative h-full lg:max-w-[56px]">
                     <div className="absolute -top-8 lg:-top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 dark:bg-slate-700 text-white text-[10px] lg:text-xs font-bold px-2 py-1 rounded-lg z-20 pointer-events-none whitespace-nowrap shadow-lg">
                       {d.label}: {formatCurrency(d.value)}
                     </div>
+                    <div className="w-full" style={{ flex: spacerFlex }} />
                     <div 
                       className={cn(
-                        "w-full rounded-xl lg:rounded-2xl transition-all duration-500 relative overflow-hidden",
+                        "w-full rounded-xl lg:rounded-2xl transition-all duration-500",
                         i === currentMonth && year === new Date().getFullYear() ? 'bg-blue-600 shadow-lg shadow-blue-100 dark:shadow-none' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'
                       )} 
-                      style={{ height: `${Math.max(height, 2)}%` }}
+                      style={{ flex: barFlex }}
                     />
                     <span className={cn(
                       "text-[9px] lg:text-[10px] font-medium lg:font-bold uppercase tracking-widest transition-colors",
-                      i === currentMonth && year === new Date().getFullYear() ? 'text-blue-600 scale-110' : 'text-slate-400'
+                      i === currentMonth && year === new Date().getFullYear() ? 'text-blue-600 lg:scale-110' : 'text-slate-400'
                     )}>
-                      {d.label}
+                      <span className="lg:hidden">{d.label.charAt(0)}</span>
+                      <span className="hidden lg:inline">{d.label}</span>
                     </span>
                   </div>
                 );

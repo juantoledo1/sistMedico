@@ -62,6 +62,9 @@ class ActividadCreate(ActividadBase):
     
     # Privacidad del paciente
     patient_initials: Optional[str] = Field(None, min_length=0, max_length=3, description="Iniciales del paciente (solo 2-3 letras)")
+    
+    # Guardia subtype
+    shift_subtype: Optional[str] = Field(None, pattern=r"^(activa|pasiva)$", description="Tipo de guardia: activa o pasiva")
 
 
 class ActividadUpdate(BaseModel):
@@ -74,6 +77,7 @@ class ActividadUpdate(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     end_date: Optional[str] = None
+    shift_subtype: Optional[str] = None
 
 
 class ActividadResponse(ActividadBase):
@@ -98,6 +102,7 @@ class ActividadResponse(ActividadBase):
     patient_location: Optional[PatientLocation] = None
     complexity: Optional[bool] = None
     patient_initials: Optional[str] = None
+    shift_subtype: Optional[str] = None
     
     @property
     def actividad_id(self) -> str:

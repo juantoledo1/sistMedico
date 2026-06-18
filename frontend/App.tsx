@@ -27,8 +27,6 @@ import {
   Plus,
   Bell,
   Sparkles,
-  Stethoscope,
-  UserCheck,
   LogOut,
   BarChart3,
   Eye,
@@ -58,9 +56,6 @@ const App: React.FC = () => {
   const [insight, setInsight] = useState<string>("Analizando tus finanzas...");
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
-  const [defaultFormType, setDefaultFormType] = useState<
-    "guardia" | "procedimiento" | "interconsulta"
-  >("guardia");
 
   const [profile, setProfile] = useState<UserProfile>({
     name: "Dr. Rodriguez",
@@ -134,6 +129,7 @@ const App: React.FC = () => {
           startTime: a.start_time || undefined,
           endTime: a.end_time || undefined,
           endDate: a.end_date || undefined,
+          shiftSubtype: a.shift_subtype || undefined,
         }));
         setTransactions(txFromApi);
         console.log("✅ DATOS EJEMPLO CREADOS:", txFromApi.length);
@@ -147,6 +143,7 @@ const App: React.FC = () => {
           startTime: a.start_time || undefined,
           endTime: a.end_time || undefined,
           endDate: a.end_date || undefined,
+          shiftSubtype: a.shift_subtype || undefined,
         }));
         setTransactions(txFromApi);
       }
@@ -270,15 +267,13 @@ const App: React.FC = () => {
           date: newTx.date,
           amount: newTx.amount,
           hours: newTx.duration,
-          hourly_rate:
-            newTx.amount && newTx.duration
-              ? Math.round(newTx.amount / newTx.duration)
-              : undefined,
+          hourly_rate: newTx.hourlyRate || undefined,
           notes: newTx.notes,
           status: newTx.status,
           start_time: newTx.startTime,
           end_time: newTx.endTime,
           end_date: newTx.endDate,
+          shift_subtype: newTx.shiftSubtype,
         });
         setTransactions(
           prev => prev.map((tx) =>
@@ -293,6 +288,7 @@ const App: React.FC = () => {
                   startTime: updated.start_time || undefined,
                   endTime: updated.end_time || undefined,
                   endDate: updated.end_date || undefined,
+                  shiftSubtype: updated.shift_subtype || undefined,
                 } as Transaction)
               : tx,
           ),
@@ -309,11 +305,9 @@ const App: React.FC = () => {
           date: newTx.date || new Date().toISOString().split("T")[0],
           amount: newTx.amount || 0,
           hours: newTx.duration,
-          hourly_rate:
-            newTx.amount && newTx.duration
-              ? Math.round(newTx.amount / newTx.duration)
-              : undefined,
+          hourly_rate: newTx.hourlyRate || undefined,
           notes: newTx.notes,
+          shift_subtype: newTx.shiftSubtype,
           start_time: newTx.startTime,
           end_time: newTx.endTime,
           end_date: newTx.endDate,
@@ -335,6 +329,7 @@ const App: React.FC = () => {
           notes: created.notes,
           duration: created.hours,
           location: created.institution,
+          shiftSubtype: created.shift_subtype || undefined,
         };
         setTransactions(prev => [tx, ...prev]);
       }
@@ -385,11 +380,9 @@ const App: React.FC = () => {
   const openForm = (
     date?: string,
     tx?: Transaction,
-    type?: "guardia" | "procedimiento" | "interconsulta",
   ) => {
     setEditingTransaction(tx || null);
     setPrefilledDate(date);
-    if (type) setDefaultFormType(type);
     setIsFormOpen(true);
   };
 
@@ -568,23 +561,9 @@ if (isLoading) {
 
         {/* Mobile Quick Add Buttons */}
         {["inicio", "turnos"].includes(activeView) && (
-          <div className="lg:hidden fixed bottom-28 right-6 z-40 flex gap-2">
+          <div className="lg:hidden fixed bottom-28 right-6 z-40">
             <button
-              onClick={() => openForm(undefined, undefined, "procedimiento")}
-              className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-lg"
-              title="Procedimiento"
-            >
-              <Stethoscope className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => openForm(undefined, undefined, "interconsulta")}
-              className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white shadow-lg"
-              title="Interconsulta"
-            >
-              <UserCheck className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => openForm(undefined, undefined, "guardia")}
+              onClick={() => openForm()}
               className="w-16 h-16 bg-blue-600 rounded-[2rem] flex items-center justify-center text-white shadow-2xl"
             >
               <Plus className="w-8 h-8 contrast-150" />
@@ -637,7 +616,6 @@ if (isLoading) {
           editingTransaction={editingTransaction || undefined}
           transactions={transactions}
           settings={settings}
-          defaultType={defaultFormType}
           institutions={institutions}
           onInstitutionChange={handleInstitutionChange}
           onInstitutionDelete={handleInstitutionDelete}

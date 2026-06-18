@@ -106,6 +106,8 @@ export interface Transaction {
   quantity?: number;
   unitValue?: number;
   specialty?: string;
+  hourlyRate?: number;
+  shiftSubtype?: 'activa' | 'pasiva';
 }
 
 export interface Institution {

@@ -182,6 +182,7 @@ class APIService {
     quantity?: number;
     unit_value?: number;
     specialty?: string;
+    shift_subtype?: string;
   }) {
     return this.request<any>('/api/actividades/', {
       method: 'POST',

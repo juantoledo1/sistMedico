@@ -93,6 +93,7 @@ async def crear_actividad(
         "patient_location": actividad.patient_location.value if actividad.patient_location else None,
         "complexity": actividad.complexity,
         "patient_initials": actividad.patient_initials,
+        "shift_subtype": actividad.shift_subtype,
         # Timestamps
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()

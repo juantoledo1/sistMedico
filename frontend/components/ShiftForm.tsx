@@ -22,32 +22,20 @@ interface ShiftFormProps {
   editingTransaction?: Transaction;
   transactions?: Transaction[];
   settings: UserSettings;
-  defaultType?: 'guardia' | 'procedimiento' | 'interconsulta';
   institutions: Institution[];
   onInstitutionChange: (inst: Institution) => void;
   onInstitutionDelete: (id: string) => void;
 }
-
-const PROCEDURES_DEFAULT = [
-  'Vía Central', 'Intubación Orotraqueal', 'Punción Lumbar', 'Sutura',
-  'Ecografía Bedside', 'RCP', 'Canalización Venosa', 'Nebulización',
-  'Aspiración de Vía Aérea', 'Cricostomía', 'Toracostomía', 'Paracentesis'
-];
 
 const HELP_ICON = String.fromCharCode(0x1F4A1);
 
 export const ShiftForm: React.FC<ShiftFormProps> = ({
   onClose, onSubmit, initialDate, editingTransaction,
   transactions,
-  settings, defaultType = 'guardia',
+  settings,
   institutions, onInstitutionChange, onInstitutionDelete
 }) => {
   const t = translations[settings.language];
-
-  const [activityType, setActivityType] = useState<'guardia' | 'procedimiento' | 'interconsulta'>(
-    defaultType === 'procedimiento' ? 'procedimiento' :
-    defaultType === 'interconsulta' ? 'interconsulta' : 'guardia'
-  );
 
   const [amount, setAmount] = useState<string>(editingTransaction ? editingTransaction.amount.toLocaleString('es-AR') : '');
   const [date, setDate] = useState<string>(editingTransaction ? editingTransaction.date : (initialDate || new Date().toISOString().split('T')[0]));
@@ -66,13 +54,6 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
   const [hours, setHours] = useState<number>(12);
   const [hourlyRate, setHourlyRate] = useState<string>('');
 
-  const [procedureName, setProcedureName] = useState<string>('');
-  const [quantity, setQuantity] = useState<number>(1);
-  const [unitValue, setUnitValue] = useState<string>('');
-  const [procedureSuggestions, setProcedureSuggestions] = useState<string[]>([]);
-
-  const [specialty, setSpecialty] = useState<string>('');
-
   const [instSearch, setInstSearch] = useState('');
   const [instDropdownOpen, setInstDropdownOpen] = useState(false);
   const instRef = useRef<HTMLDivElement>(null);
@@ -89,6 +70,7 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
 
   const [extras, setExtras] = useState<ExtraActivity[]>([]);
 
+  const [shiftSubtype, setShiftSubtype] = useState<'activa' | 'pasiva'>('activa');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -111,7 +93,7 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
   }, [editingTransaction]);
 
   useEffect(() => {
-    if (activityType === 'guardia' && date && hours > 0 && startTime) {
+    if (date && hours > 0 && startTime) {
       const [sh, sm] = startTime.split(':').map(Number);
       const start = new Date(date + 'T' + startTime);
       const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
@@ -121,39 +103,20 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
       const em = String(end.getMinutes()).padStart(2, '0');
       setEndTime(eh + ':' + em);
     }
-  }, [date, hours, startTime, activityType]);
+  }, [date, hours, startTime]);
 
   const [editingRateType, setEditingRateType] = useState<'guardia_rate' | 'procedimiento_rate' | 'interconsulta_rate' | null>(null);
   const [tempRateValue, setTempRateValue] = useState('');
   const [rateSavedFeedback, setRateSavedFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activityType === 'guardia' && hours > 0 && hourlyRate && hourlyRate.trim() !== '') {
+    if (hours > 0 && hourlyRate && hourlyRate.trim() !== '') {
       const rawRate = parseInt(hourlyRate.replace(/\D/g, '')) || 0;
       const et = extras.reduce((s, e) => s + e.amount, 0);
       const total = (hours * rawRate) + et;
       if (total > 0) setAmount(total.toLocaleString('es-AR'));
     }
-  }, [hours, hourlyRate, extras, activityType]);
-
-  useEffect(() => {
-    if (activityType === 'procedimiento' && quantity > 0 && unitValue && unitValue.trim() !== '') {
-      const rawUnit = parseInt(unitValue.replace(/\D/g, '')) || 0;
-      const total = quantity * rawUnit;
-      if (total > 0) setAmount(total.toLocaleString('es-AR'));
-    }
-  }, [quantity, unitValue, activityType]);
-
-  useEffect(() => {
-    if (activityType === 'procedimiento' && procedureName.length >= 1) {
-      const filtered = PROCEDURES_DEFAULT.filter(p =>
-        p.toLowerCase().includes(procedureName.toLowerCase())
-      );
-      setProcedureSuggestions(filtered.slice(0, 5));
-    } else {
-      setProcedureSuggestions([]);
-    }
-  }, [procedureName, activityType]);
+  }, [hours, hourlyRate, extras]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -198,14 +161,8 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
     setInstDropdownOpen(false);
     const inst = institutions.find(i => i.name.toLowerCase().trim() === name.toLowerCase().trim());
     if (inst) {
-      if (inst.guardia_rate && activityType === 'guardia') {
+      if (inst.guardia_rate) {
         setHourlyRate(inst.guardia_rate.toString());
-      }
-      if (inst.procedimiento_rate && activityType === 'procedimiento') {
-        setUnitValue(inst.procedimiento_rate.toString());
-      }
-      if (inst.interconsulta_rate && activityType === 'interconsulta') {
-        setAmount(inst.interconsulta_rate.toLocaleString('es-AR'));
       }
       setExtras(extras.map(e => ({
         ...e,
@@ -328,23 +285,21 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
 
     setSubmitting(true);
     try {
+      const rawRate = parseInt(hourlyRate.replace(/\D/g, '')) || 0;
       await onSubmit({
         amount: cleanAmount,
         date,
-        endDate: activityType === 'guardia' ? endDate : undefined,
-        startTime: activityType === 'guardia' ? startTime : undefined,
-        endTime: activityType === 'guardia' ? endTime : undefined,
+        endDate,
+        startTime,
+        endTime,
         institution,
-        type: activityType === 'guardia' ? ShiftType.ACTIVE :
-             activityType === 'procedimiento' ? ShiftType.CONSULTATION : ShiftType.PASSIVE,
+        type: ShiftType.ACTIVE,
         status,
         notes,
         id: editingTransaction?.id,
-        duration: activityType === 'guardia' ? hours : undefined,
-        procedureName: activityType === 'procedimiento' ? procedureName : undefined,
-        quantity: activityType === 'procedimiento' ? quantity : undefined,
-        unitValue: activityType === 'procedimiento' ? (parseInt(unitValue.replace(/\D/g, '')) || 0) : undefined,
-        specialty: activityType === 'interconsulta' ? specialty : undefined,
+        duration: hours,
+        hourlyRate: rawRate,
+        shiftSubtype,
       });
 
       for (const extra of extras) {
@@ -375,57 +330,44 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
     setStatus(status === PaymentStatus.PENDING ? PaymentStatus.PAID : PaymentStatus.PENDING);
   };
 
-  const typeDescriptions: Record<string, string> = {
-    guardia: 'Guardia de rutina en horas',
-    procedimiento: 'Procedimiento médico realizado',
-    interconsulta: 'Interconsulta en el servicio',
-  };
-
   return (
     <div
       className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-end lg:items-center justify-center animate-in fade-in duration-200"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white dark:bg-slate-900 w-full max-h-[90vh] lg:max-h-[85vh] lg:rounded-t-3xl lg:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-900 w-full lg:max-w-xl max-h-[90vh] lg:max-h-[85vh] lg:rounded-t-3xl lg:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 lg:p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-10">
           <div className="flex-1">
-            <h2 className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white">
+            <h2 className="text-lg lg:text-xl font-black text-slate-900 dark:text-white">
               {editingTransaction ? 'Editar' : 'Nueva Actividad'}
             </h2>
-            <p className="text-xs text-slate-500">Tocá fuera para cerrar</p>
+            <p className="text-[10px] text-slate-500">Tocá fuera para cerrar</p>
           </div>
-          <button onClick={onClose} className="w-11 h-11 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-full flex items-center justify-center">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="w-9 h-9 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-full flex items-center justify-center">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleApply} className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-5">
-          {/* TYPE SELECTOR */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase">Tipo de Actividad</label>
-            <div className="grid grid-cols-3 gap-2">
-              <button type="button" onClick={() => setActivityType('guardia')}
-                className={cn("flex flex-col items-center gap-1 p-3 rounded-2xl border-2 font-bold text-sm",
-                  activityType === 'guardia' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600')}>
-                <Clock className="w-6 h-6" /> Guardia
-                <span className={cn("text-[7px] font-normal tracking-tight",
-                  activityType === 'guardia' ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500')}>Guardia de rutina</span>
+        <form onSubmit={handleApply} className="flex-1 overflow-y-auto p-4 lg:p-5 space-y-4">
+          {/* TYPE BADGE + SUBTYPE TOGGLE */}
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5 font-bold text-xs">
+              <Clock className="w-4 h-4" />
+              Guardia
+            </div>
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => setShiftSubtype('activa')}
+                className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                  shiftSubtype === 'activa' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500')}>
+                Activa
               </button>
-              <button type="button" onClick={() => setActivityType('procedimiento')}
-                className={cn("flex flex-col items-center gap-1 p-3 rounded-2xl border-2 font-bold text-sm",
-                  activityType === 'procedimiento' ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600')}>
-                <Stethoscope className="w-6 h-6" /> Proced.
-                <span className={cn("text-[7px] font-normal tracking-tight",
-                  activityType === 'procedimiento' ? 'text-purple-100' : 'text-slate-400 dark:text-slate-500')}>Procedimiento médico</span>
-              </button>
-              <button type="button" onClick={() => setActivityType('interconsulta')}
-                className={cn("flex flex-col items-center gap-1 p-3 rounded-2xl border-2 font-bold text-sm",
-                  activityType === 'interconsulta' ? 'bg-green-600 border-green-600 text-white' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600')}>
-                <UserCheck className="w-6 h-6" /> Intercons.
-                <span className={cn("text-[7px] font-normal tracking-tight",
-                  activityType === 'interconsulta' ? 'text-green-100' : 'text-slate-400 dark:text-slate-500')}>Interconsulta en servicio</span>
+              <button type="button" onClick={() => setShiftSubtype('pasiva')}
+                className={cn("px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                  shiftSubtype === 'pasiva' ? 'bg-slate-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-500')}>
+                Pasiva
               </button>
             </div>
+            <span className="text-[10px] text-slate-400 hidden sm:inline">Creación de guardia con actividades adicionales</span>
           </div>
 
           {/* INSTITUTION */}
@@ -435,7 +377,7 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
               <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
                 <input type="text" value={instEditName} onChange={e => setInstEditName(e.target.value)}
                   placeholder="Nombre de la institución"
-                  className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 font-bold text-sm text-slate-900 dark:text-white" />
+                  className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 font-bold text-sm text-slate-900 dark:text-white" />
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="text-[9px] font-black text-slate-500 block mb-1">Guardia ($/h)</label>
@@ -468,8 +410,8 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
               <div ref={instRef} className="relative">
                 <div
                   onClick={() => setInstDropdownOpen(!instDropdownOpen)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 font-bold flex items-center justify-between cursor-pointer"
-                  style={{ minHeight: '48px' }}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 font-bold flex items-center justify-between cursor-pointer"
+                  style={{ minHeight: '40px' }}
                 >
                   <span className={institution ? 'text-slate-900 dark:text-white' : 'text-slate-400'}>
                     {institution || 'Buscar o crear institución...'}
@@ -506,7 +448,7 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
                       ))
                     )}
                     <button type="button" onClick={handleOpenNewInst}
-                      className="w-full flex items-center gap-2 px-3 py-3 text-sm font-bold text-blue-600 border-t border-slate-100 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" style={{ minHeight: '48px' }}>
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-blue-600 border-t border-slate-100 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" style={{ minHeight: '40px' }}>
                       <Plus className="w-4 h-4" /> + Nueva Institución
                     </button>
                   </div>
@@ -658,106 +600,60 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
           {/* MAIN AMOUNT */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase">Monto Total ($)</label>
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border-2 border-blue-100 dark:border-blue-800">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-4xl font-black text-blue-600">$</span>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border-2 border-blue-100 dark:border-blue-800">
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-2xl lg:text-3xl font-black text-blue-600">$</span>
                 <input type="text" inputMode="numeric" value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="bg-transparent text-5xl font-black text-slate-900 dark:text-white w-full text-center outline-none"
+                  className="bg-transparent text-3xl lg:text-4xl font-black text-slate-900 dark:text-white w-full text-center outline-none"
                   placeholder="0"
-                  disabled={activityType === 'guardia' || activityType === 'procedimiento'} />
+                  disabled />
               </div>
               <p className="text-center text-xs text-slate-400 mt-2">Pesos Argentinos</p>
             </div>
           </div>
 
-          {/* TYPE-SPECIFIC FIELDS */}
-          {activityType === 'guardia' && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500">Horas</label>
-                <input type="number" value={hours} onChange={(e) => setHours(parseInt(e.target.value) || 0)}
-                  placeholder="ej: 12"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" min={1} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500">$/Hora</label>
-                <input type="text" inputMode="numeric" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)}
-                  placeholder="ej: 19000" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
-              </div>
-            </div>
-          )}
-
-          {activityType === 'procedimiento' && (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500">Procedimiento</label>
-                <div className="relative">
-                  <input type="text" value={procedureName} onChange={(e) => setProcedureName(e.target.value)}
-                    placeholder="Buscar..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
-                  {procedureSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 rounded-xl mt-1 z-20 shadow-lg">
-                      {procedureSuggestions.map(s => (
-                        <button key={s} type="button" onClick={() => { setProcedureName(s); setProcedureSuggestions([]); }}
-                          className="w-full text-left px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-bold text-slate-900 dark:text-white">{s}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500">Cantidad</label>
-                  <input type="number" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    placeholder="1" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" min={1} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500">$/Unitario</label>
-                  <input type="text" inputMode="numeric" value={unitValue} onChange={(e) => setUnitValue(e.target.value)}
-                    placeholder="ej: 15000" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activityType === 'interconsulta' && (
+          {/* HORAS & VALOR HORA */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500">Especialidad</label>
-              <input type="text" value={specialty} onChange={(e) => setSpecialty(e.target.value)}
-                placeholder="Ej: Cardiología, UTI..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
+              <label className="text-xs font-bold text-slate-500">Horas</label>
+              <input type="number" value={hours} onChange={(e) => setHours(parseInt(e.target.value) || 0)}
+                placeholder="ej: 12"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 dark:text-white" min={1} />
             </div>
-          )}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500">$/Hora</label>
+              <input type="text" inputMode="numeric" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)}
+                placeholder="ej: 19000" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 dark:text-white" />
+            </div>
+          </div>
 
           {/* DATE */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500">Fecha inicio</label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 dark:text-white" />
             </div>
-            {activityType === 'guardia' && (
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500">Fecha fin</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 dark:text-white" />
               </div>
-            )}
           </div>
 
-          {activityType === 'guardia' && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500">Hora inicio</label>
-                <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500">Hora fin</label>
-                <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-bold text-slate-900 dark:text-white" />
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500">Hora inicio</label>
+              <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 dark:text-white" />
             </div>
-          )}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500">Hora fin</label>
+              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 dark:text-white" />
+            </div>
+          </div>
 
           {/* EXTRAS */}
           <div className="space-y-3">
@@ -839,12 +735,12 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
             <div
               onClick={handleStatusToggle}
               className={cn(
-                "relative w-full p-1 rounded-2xl cursor-pointer transition-all duration-300 flex border",
+                "relative w-full lg:max-w-xs lg:mx-auto p-0.5 rounded-xl cursor-pointer transition-all duration-300 flex border",
                 status === PaymentStatus.PENDING
                   ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
                   : "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
               )}
-              style={{ minHeight: '56px' }}
+              style={{ minHeight: '44px' }}
             >
               <div className={cn(
                 "flex-1 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all duration-300",
@@ -876,14 +772,14 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500">Notas (opcional)</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-              placeholder="Observaciones..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-3 font-medium h-20 resize-none text-slate-900 dark:text-white" />
+              placeholder="Observaciones..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-medium h-16 resize-none text-slate-900 dark:text-white" />
           </div>
 
           {/* SUBMIT */}
           <button type="submit" disabled={!institution || !amount || submitting}
-            className={cn("w-full p-4 rounded-2xl font-black text-lg shadow-lg flex items-center justify-center gap-2 transition-all",
+            className={cn("w-full lg:w-auto lg:px-10 lg:mx-auto p-3 rounded-xl font-bold text-base shadow-lg flex items-center justify-center gap-2 transition-all",
               institution && amount && !submitting ? "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]" : "bg-slate-300 text-slate-500 cursor-not-allowed")}>
-            <Check className="w-5 h-5" />
+            <Check className="w-4 h-4" />
             {submitting ? 'Guardando...' : extras.length > 0 ? `Guardar (${extras.length + 1} actividades)` : 'Guardar'}
           </button>
         </form>

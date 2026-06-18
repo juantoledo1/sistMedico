@@ -152,7 +152,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
               <span className="text-[9px] lg:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t.balanceMes}</span>
             </div>
             <div className="space-y-1">
-              <span className="text-3xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter block truncate" title={formatCurrencyFull(currentMonthTotal)}>
+              <span className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tighter block truncate" title={formatCurrencyFull(currentMonthTotal)}>
                 {formatCurrency(currentMonthTotal)}
               </span>
               <div className="flex items-center gap-2 text-green-600 text-[9px] lg:text-[10px] font-black uppercase tracking-widest pt-1 lg:pt-2">
@@ -173,7 +173,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transactions, insight, onO
             </div>
             <div className="space-y-3 lg:space-y-4">
               <div className="flex justify-between items-end">
-                <span className="text-2xl lg:text-4xl font-black tracking-tighter truncate block pr-2" title={formatCurrencyFull(currentMonthTotal)}>
+                <span className="text-2xl lg:text-3xl font-black tracking-tighter truncate block pr-2" title={formatCurrencyFull(currentMonthTotal)}>
                   {formatCurrency(currentMonthTotal)} / {goal >= 1000000 ? `${goal/1000000}M` : formatCurrency(goal)}
                 </span>
                 <span className="text-[9px] lg:text-[10px] font-black text-white/40">{Math.min(100, Math.round((currentMonthTotal / goal) * 100))}%</span>

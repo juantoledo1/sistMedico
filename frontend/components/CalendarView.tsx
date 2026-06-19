@@ -13,7 +13,7 @@ import {
   isToday
 } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, Clock, FileText, Trash2, Edit3, X, Calendar as CalendarIcon, TrendingUp, CreditCard, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, FileText, Trash2, Edit3, X, Calendar as CalendarIcon } from 'lucide-react';
 import { Transaction, PaymentStatus, ShiftType, UserSettings } from '../types';
 import { cn, formatCurrency } from '../lib/utils';
 import { translations } from '../translations';
@@ -146,31 +146,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ transactions, onOpen
           </span>
         </div>
       )}
-
-      {/* Monthly Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800 overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-1">
-            <TrendingUp className="w-3 h-3 text-blue-600 shrink-0" />
-            <span className="text-[9px] font-black text-blue-600 uppercase tracking-wider">Total</span>
-          </div>
-          <p className="text-sm md:text-lg font-black text-slate-900 dark:text-white truncate">{formatCurrency(monthSummary.total)}</p>
-        </div>
-        <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-xl border border-green-100 dark:border-green-800 overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-1">
-            <CreditCard className="w-3 h-3 text-green-600 shrink-0" />
-            <span className="text-[9px] font-black text-green-600 uppercase tracking-wider">Cobrado</span>
-          </div>
-          <p className="text-sm md:text-lg font-black text-green-700 dark:text-green-400 truncate">{formatCurrency(monthSummary.paid)}</p>
-        </div>
-        <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl border border-orange-100 dark:border-orange-800 overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Wallet className="w-3 h-3 text-orange-600 shrink-0" />
-            <span className="text-[9px] font-black text-orange-600 uppercase tracking-wider">Pendiente</span>
-          </div>
-          <p className="text-sm md:text-lg font-black text-orange-700 dark:text-orange-400 truncate">{formatCurrency(monthSummary.pending)}</p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-8 space-y-4">

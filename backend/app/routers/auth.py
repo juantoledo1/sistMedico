@@ -153,8 +153,10 @@ async def change_password(
     user = await db.users.find_one({"_id": safe_object_id(current_user["id"])})
     if not user or not verify_password(current_password, user.get("password_hash", "")):
         raise HTTPException(401, detail="Contraseña actual incorrecta")
-    if len(new_password) < 6:
-        raise HTTPException(400, detail="Nueva contraseña muy corta (mínimo 6 caracteres)")
+
+    is_valid, msg = validate_password_strength(new_password)
+    if not is_valid:
+        raise HTTPException(400, detail=msg)
 
     new_hash = hash_password(new_password)
     await db.users.update_one(

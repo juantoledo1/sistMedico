@@ -2,7 +2,7 @@
 Modelos Pydantic para Usuarios
 Seguridad + Validación de entrada
 """
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
 from typing import Optional, List
 from datetime import datetime
 
@@ -26,6 +26,12 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=50, description="Contraseña (mínimo 8 caracteres)")
     password_confirm: str = Field(..., description="Confirmar contraseña")
     phone: Optional[str] = Field(None, max_length=20, description="Teléfono")
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.password_confirm:
+            raise ValueError("Las contraseñas no coinciden")
+        return self
 
 
 class UserUpdate(BaseModel):

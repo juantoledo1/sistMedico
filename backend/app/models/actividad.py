@@ -69,15 +69,15 @@ class ActividadCreate(ActividadBase):
 
 class ActividadUpdate(BaseModel):
     """Schema para actualizar actividad"""
-    institution: Optional[str] = None
-    date: Optional[str] = None
-    amount: Optional[int] = None
+    institution: Optional[str] = Field(None, min_length=1, max_length=200)
+    date: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    amount: Optional[int] = Field(None, ge=0)
     status: Optional[PaymentStatus] = None
-    notes: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    end_date: Optional[str] = None
-    shift_subtype: Optional[str] = None
+    notes: Optional[str] = Field(None, max_length=1000)
+    start_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
+    end_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
+    end_date: Optional[str] = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    shift_subtype: Optional[str] = Field(None, pattern=r"^(activa|pasiva)$")
 
 
 class ActividadResponse(ActividadBase):

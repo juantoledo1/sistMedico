@@ -85,6 +85,12 @@ async def create_indexes():
             name="institution_index"
         )
         
+        # Índice compuesto para instituciones (userId + name)
+        await _database.institutions.create_index(
+            [("userId", 1), ("name", 1)],
+            name="user_institution_index"
+        )
+        
         logger.info("✅ Índices creados")
         
     except Exception as e:

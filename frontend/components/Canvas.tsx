@@ -1,5 +1,5 @@
 
-import React from 'react';
+
 /* Fix: Changed StitchItem to StitchBlock as StitchItem is not exported from types */
 import { StitchBlock, StitchType } from '../types';
 
@@ -11,7 +11,7 @@ interface CanvasProps {
   genMessage: string;
 }
 
-export const Canvas: React.FC<CanvasProps> = ({ activeStitch, onPlayAudio, isGenerating, genMessage }) => {
+export function Canvas({ activeStitch, onPlayAudio, isGenerating, genMessage }: CanvasProps) {
   if (isGenerating) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900/40 p-12">

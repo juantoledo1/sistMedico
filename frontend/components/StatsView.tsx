@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ActividadStats } from '../types';
 import { api } from '../services/api';
 import { 
@@ -45,7 +45,7 @@ const translations = {
   }
 };
 
-export const StatsView: React.FC<StatsViewProps> = ({ onBack, settings }) => {
+export function StatsView({ onBack, settings }: StatsViewProps) {
   const [stats, setStats] = useState<ActividadStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

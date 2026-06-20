@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import { useActionState, useState } from 'react';
 import { Eye, EyeOff, Sparkles } from 'lucide-react';
-import { translations, Language } from '../translations';
+import { translations, Language } from '../../translations';
+import { Button } from '../ui/Button';
+import { Label } from '../ui/Label';
 
 interface LoginViewProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -10,15 +12,29 @@ interface LoginViewProps {
   onNavigateToRegister?: () => void;
 }
 
+interface LoginFormState {
+  error: string | null;
+}
+
 export function LoginView({ onLogin, loginError, isLoading, settings, onNavigateToRegister }: LoginViewProps) {
-  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const t = translations[settings.language];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onLogin(loginForm.email, loginForm.password);
-  };
+  const [state, formAction, isPending] = useActionState(
+    async (prev: LoginFormState, formData: FormData) => {
+      const email = formData.get('email') as string;
+      const password = formData.get('password') as string;
+      try {
+        await onLogin(email, password);
+        return { error: null };
+      } catch {
+        return { error: 'Error al iniciar sesión. Verificá tus credenciales.' };
+      }
+    },
+    { error: null },
+  );
+
+  const busy = isPending || isLoading;
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-6">
@@ -49,40 +65,32 @@ export function LoginView({ onLogin, loginError, isLoading, settings, onNavigate
           </h1>
           <p className="text-slate-600 text-center mb-8">{t.iniciarSesion}</p>
           
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form action={formAction} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                {t.email || "Email"}
-              </label>
+              <Label variant="auth" htmlFor="login-email">{t.email || "Email"}</Label>
               <input
                 type="email"
-                value={loginForm.email}
-                onChange={(e) =>
-                  setLoginForm({ ...loginForm, email: e.target.value })
-                }
-                className="w-full px-4 py-4 rounded-xl border-2 border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white text-lg"
+                name="email"
+                id="login-email"
+                defaultValue=""
+                className="w-full px-4 py-4 rounded-xl border-2 border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white text-lg min-h-[56px]"
                 placeholder="doctor@hospital.com"
                 autoComplete="email"
-                style={{ minHeight: '56px' }}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
-                {t.contrasena || "Contraseña"}
-              </label>
+              <Label variant="auth" htmlFor="login-password">{t.contrasena || "Contraseña"}</Label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  value={loginForm.password}
-                  onChange={(e) =>
-                    setLoginForm({ ...loginForm, password: e.target.value })
-                  }
-                  className="w-full px-4 py-4 pr-12 rounded-xl border-2 border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white text-lg"
+                  name="password"
+                  id="login-password"
+                  defaultValue=""
+                  className="w-full px-4 py-4 pr-12 rounded-xl border-2 border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white text-lg min-h-[56px]"
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  style={{ minHeight: '56px' }}
                   required
                 />
                 <button
@@ -95,19 +103,15 @@ export function LoginView({ onLogin, loginError, isLoading, settings, onNavigate
               </div>
             </div>
 
-            {loginError && (
+            {(state.error || loginError) && (
               <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm font-medium">
-                {loginError}
+                {state.error || loginError}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all disabled:opacity-50"
-            >
-              {isLoading ? t.cargando : 'Iniciar Sesión'}
-            </button>
+            <Button type="submit" disabled={busy} className="w-full py-4 text-lg">
+              {busy ? t.cargando : 'Iniciar Sesión'}
+            </Button>
           </form>
 
           <p className="text-center text-slate-400 text-sm mt-6">

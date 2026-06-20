@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StitchType } from '../types';
 
 interface GenerationFormProps {
@@ -8,11 +8,11 @@ interface GenerationFormProps {
   isGenerating: boolean;
 }
 
-export const GenerationForm: React.FC<GenerationFormProps> = ({ type, onGenerate, isGenerating }) => {
+export function GenerationForm({ type, onGenerate, isGenerating }: GenerationFormProps) {
   const [prompt, setPrompt] = useState('');
   const [voice, setVoice] = useState('Kore');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
     if (!prompt.trim() || isGenerating) return;
     onGenerate(prompt, { voice });

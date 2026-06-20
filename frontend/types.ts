@@ -23,7 +23,7 @@ export interface UserProfile {
   name: string;
   specialty: string;
   institution: string;
-  avatar: 'masculino' | 'femenino' | 'neutral';
+  avatar: 'masc_formal' | 'masc_doctor' | 'masc_scrubs' | 'fem_formal' | 'fem_doctor' | 'fem_scrubs';
 }
 
 // API User Profile (from backend)
@@ -106,6 +106,8 @@ export interface Transaction {
   quantity?: number;
   unitValue?: number;
   specialty?: string;
+  hours?: number;
+  patientLocation?: 'intraservicio' | 'extraservicio';
   hourlyRate?: number;
   shiftSubtype?: 'activa' | 'pasiva';
 }

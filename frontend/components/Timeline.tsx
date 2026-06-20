@@ -1,5 +1,4 @@
 
-import React from 'react';
 /* Fix: Changed StitchItem to StitchBlock as StitchItem is not exported from types */
 import { StitchBlock, StitchType } from '../types';
 
@@ -11,7 +10,7 @@ interface TimelineProps {
   onRemove: (id: string) => void;
 }
 
-export const Timeline: React.FC<TimelineProps> = ({ items, activeId, onSelect, onRemove }) => {
+export function Timeline({ items, activeId, onSelect, onRemove }: TimelineProps) {
   return (
     <div className="h-32 border-t border-zinc-800 bg-zinc-950 p-4 flex gap-4 overflow-x-auto items-center">
       {items.length === 0 ? (

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { StitchBlock, StitchType } from '../types';
 
 interface BlockProps {
@@ -10,7 +10,7 @@ interface BlockProps {
   onPlayAudio?: (base64: string) => void;
 }
 
-export const Block: React.FC<BlockProps> = ({ block, onUpdate, onRun, onDelete, onPlayAudio }) => {
+export function Block({ block, onUpdate, onRun, onDelete, onPlayAudio }: BlockProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   const typeIcons = {

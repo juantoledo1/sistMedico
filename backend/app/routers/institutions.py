@@ -6,7 +6,8 @@ from datetime import datetime
 import logging
 
 from app.models.institution import InstitutionCreate, InstitutionUpdate, InstitutionResponse
-from app.services.auth import decode_token
+from app.core.security import decode_token
+from app.core.object_id_utils import safe_object_id
 from app.db.mongo import get_database
 
 router = APIRouter(prefix="/api/institutions", tags=["🏥 Instituciones"])
@@ -71,11 +72,7 @@ async def update_institution(
     user_id: str = Depends(get_current_user_id),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    from bson import ObjectId
-    try:
-        target = await db.institutions.find_one({"_id": ObjectId(institution_id), "userId": user_id})
-    except Exception:
-        target = await db.institutions.find_one({"_id": institution_id, "userId": user_id})
+    target = await db.institutions.find_one({"_id": safe_object_id(institution_id), "userId": user_id})
 
     if not target:
         raise HTTPException(404, detail="Institución no encontrada")
@@ -99,11 +96,7 @@ async def soft_delete_institution(
     user_id: str = Depends(get_current_user_id),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    from bson import ObjectId
-    try:
-        target = await db.institutions.find_one({"_id": ObjectId(institution_id), "userId": user_id})
-    except Exception:
-        target = await db.institutions.find_one({"_id": institution_id, "userId": user_id})
+    target = await db.institutions.find_one({"_id": safe_object_id(institution_id), "userId": user_id})
 
     if not target:
         raise HTTPException(404, detail="Institución no encontrada")

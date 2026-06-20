@@ -14,7 +14,8 @@ from app.models.actividad import (
     ActividadCreate, ActividadResponse, ActividadUpdate,
     ActividadStats, ActivityType, PaymentStatus
 )
-from app.services.auth import decode_token
+from app.core.security import decode_token
+from app.core.object_id_utils import safe_object_id
 from app.db.mongo import get_database
 
 router = APIRouter(prefix="/api/actividades", tags=["🏥 Actividades"])
@@ -23,7 +24,6 @@ security = HTTPBearer()
 
 
 async def get_current_user_id(credentials = Depends(security)) -> str:
-    """Extraer userId desde JWT"""
     payload = decode_token(credentials.credentials)
     if not payload:
         raise HTTPException(401, detail="Token inválido")
@@ -31,19 +31,11 @@ async def get_current_user_id(credentials = Depends(security)) -> str:
 
 
 async def verify_user_active(user_id: str = Depends(get_current_user_id), db: AsyncIOMotorDatabase = Depends(get_database)):
-    """Verificar que el usuario está activo (status = 'active')"""
-    from bson import ObjectId
-    try:
-        user = await db.users.find_one({"_id": ObjectId(user_id)})
-    except Exception:
-        user = await db.users.find_one({"_id": user_id})
-    
+    user = await db.users.find_one({"_id": safe_object_id(user_id)})
     if not user:
         raise HTTPException(status_code=403, detail="Usuario no encontrado")
-    
     if user.get("is_deleted", False):
         raise HTTPException(status_code=403, detail="Cuenta eliminada")
-    
     if user.get("status", "active") != "active" or not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="Cuenta suspendida - No puede realizar esta acción")
 
@@ -201,10 +193,8 @@ async def obtener_actividad(
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     """Obtener una actividad específica - SOLO del propio médico"""
-    from bson import ObjectId
-    
     doc = await db.actividades.find_one({
-        "_id": ObjectId(actividad_id),
+        "_id": safe_object_id(actividad_id),
         "userId": user_id  # 🔐 SEGURIDAD: Verifica propiedad
     })
     
@@ -224,13 +214,11 @@ async def actualizar_actividad(
     _ = Depends(verify_user_active)
 ):
     """Actualizar actividad - SOLO del propio médico"""
-    from bson import ObjectId
-    
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     update_data["updated_at"] = datetime.utcnow()
     
     result = await db.actividades.find_one_and_update(
-        {"_id": ObjectId(actividad_id), "userId": user_id},  # 🔐 FILTRO
+        {"_id": safe_object_id(actividad_id), "userId": user_id},
         {"$set": update_data},
         return_document=True
     )
@@ -250,11 +238,9 @@ async def eliminar_actividad(
     _ = Depends(verify_user_active)
 ):
     """Eliminar actividad - SOLO del propio médico"""
-    from bson import ObjectId
-    
     result = await db.actividades.delete_one({
-        "_id": ObjectId(actividad_id),
-        "userId": user_id  # 🔐 FILTRO
+        "_id": safe_object_id(actividad_id),
+        "userId": user_id
     })
     
     if result.deleted_count == 0:

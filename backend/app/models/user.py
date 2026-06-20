@@ -107,3 +107,25 @@ class UserListResponse(BaseModel):
 class ToggleActiveRequest(BaseModel):
     """Request para activar/desactivar usuario"""
     is_active: bool
+
+
+class AdminRegisterRequest(BaseModel):
+    """Request para crear admin - secreto en body"""
+    user_data: UserCreate
+    secret: str
+
+
+class UserUpdateByAdmin(BaseModel):
+    """Schema para admin actualizar usuario"""
+    full_name: Optional[str] = Field(None, min_length=2, max_length=100)
+    specialty: Optional[str] = Field(None, max_length=100)
+    institution: Optional[str] = Field(None, max_length=200)
+    phone: Optional[str] = Field(None, max_length=20)
+    status: Optional[str] = Field(None, pattern=r"^(active|inactive|suspended)$")
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+
+
+class ResetPasswordResponse(BaseModel):
+    """Respuesta para reset de contraseña - NUNCA devuelve pass en texto plano"""
+    message: str = "Contraseña reseteada. El usuario debe cambiarla."

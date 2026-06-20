@@ -135,9 +135,10 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # ==================== ROUTERS (CRUD COMPLETO) ====================
 
-from app.routers import auth, actividades, institutions
+from app.routers import auth, admin, actividades, institutions
 
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(actividades.router)
 app.include_router(institutions.router)
 
@@ -152,6 +153,7 @@ async def test_endpoint():
         "security": "headers applied + multi-tenant",
         "endpoints": {
             "auth": ["/api/auth/register", "/api/auth/login", "/api/auth/me"],
+            "admin": ["/api/auth/admin/users", "/api/auth/admin/users-with-debts"],
             "actividades": ["/api/actividades", "/api/actividades/stats"]
         }
     }

@@ -40,11 +40,17 @@ export function useAppState(): UseAppStateReturn {
     avatar: "masc_doctor",
   });
   const [isAdmin, setIsAdmin] = useState(false);
-  const [settings, setSettings] = useState<UserSettings>({
-    language: "es",
-    darkMode: false,
-    currency: "ARS",
-  });
+
+  // Load persisted settings from localStorage
+  const loadSettings = (): UserSettings => {
+    try {
+      const saved = localStorage.getItem('medflow_settings');
+      if (saved) return { language: 'es', darkMode: false, currency: 'ARS', ...JSON.parse(saved) };
+    } catch {}
+    return { language: 'es', darkMode: false, currency: 'ARS' };
+  };
+
+  const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
   const tx = useTransactions();
   const auth = useAuth();
@@ -148,7 +154,9 @@ export function useAppState(): UseAppStateReturn {
   };
 
   const handleUpdateSettings = (s: Partial<UserSettings>) => {
-    setSettings({ ...settings, ...s });
+    const updated = { ...settings, ...s };
+    setSettings(updated);
+    try { localStorage.setItem('medflow_settings', JSON.stringify(updated)); } catch {}
   };
 
   return {

@@ -15,7 +15,6 @@ interface SettingsViewProps {
   isAdmin?: boolean;
   onUpdateProfile: (profile: Partial<UserProfile>) => void;
   onUpdateSettings: (settings: Partial<UserSettings>) => void;
-
 }
 
 export function SettingsView({

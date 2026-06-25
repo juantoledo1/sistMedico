@@ -4,9 +4,11 @@ import { Transaction, PaymentStatus, ShiftType, UserProfile, UserSettings } from
 import { Search, Bell, Plus, PieChart } from 'lucide-react';
 import { cn, formatCurrency } from '../../lib/utils';
 import { translations } from '../../translations';
+import { useNotifications } from '../../hooks/useNotifications';
 import { StatsCards } from './StatsCards';
 import { MonthlyChart } from './MonthlyChart';
 import { TransactionHistory } from './TransactionHistory';
+import { NotificationsDropdown } from './NotificationsDropdown';
 import { SearchModal } from './SearchModal';
 
 interface DashboardProps {
@@ -27,9 +29,11 @@ export function Dashboard({
   settings,
 }: DashboardProps) {
   const t = translations[settings.language];
+  const { unreadCount } = useNotifications();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   const currentMonthTotal = transactions.reduce((acc, t) => acc + t.amount, 0);
   const todayStr = new Date().toISOString().split('T')[0];
@@ -111,10 +115,23 @@ export function Dashboard({
             className="w-11 h-11 lg:w-12 lg:h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 dark:hover:border-blue-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all shadow-sm group">
             <Search className="w-4 h-4 lg:w-5 lg:h-5" />
           </button>
-          <button className="w-11 h-11 lg:w-12 lg:h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 dark:hover:border-blue-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all shadow-sm relative group">
-            <Bell className="w-4 h-4 lg:w-5 lg:h-5" />
-            <span className="absolute top-2.5 right-2.5 lg:top-3 lg:right-3 w-2 h-2 bg-red-500 border-2 border-white dark:border-slate-800 rounded-full" />
-          </button>
+          <div className="relative">
+            <button onClick={() => setShowNotifDropdown(prev => !prev)}
+              className="w-11 h-11 lg:w-12 lg:h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 dark:hover:border-blue-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all shadow-sm relative group">
+              <Bell className="w-4 h-4 lg:w-5 lg:h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 lg:-top-2 lg:-right-2 min-w-[20px] h-5 rounded-full bg-red-500 border-2 border-white dark:border-slate-800 flex items-center justify-center text-[10px] font-bold text-white px-1 leading-none shadow-lg">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+            {showNotifDropdown && (
+              <NotificationsDropdown
+                language={settings.language}
+                onClose={() => setShowNotifDropdown(false)}
+              />
+            )}
+          </div>
         </div>
       </header>
 

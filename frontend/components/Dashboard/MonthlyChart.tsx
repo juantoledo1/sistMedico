@@ -48,14 +48,24 @@ export function MonthlyChart({
   return (
     <DashboardCard>
       {/* ── header ── */}
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h2 className="text-lg lg:text-xl font-black tracking-tight text-slate-900 dark:text-white">
-            Rendimiento
-          </h2>
-              <p className="text-[9px] lg:text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-            Año {year}
-          </p>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 lg:w-10 lg:h-10 bg-slate-900 dark:bg-slate-700 rounded-xl flex items-center justify-center shadow-xl shadow-slate-900/20 dark:shadow-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 lg:w-5 lg:h-5 text-white" aria-hidden="true">
+              <path d="M3 3v16a2 2 0 0 0 2 2h16"></path>
+              <path d="M18 17V9"></path>
+              <path d="M13 17V5"></path>
+              <path d="M8 17v-3"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-base lg:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+              Rendimiento
+            </h2>
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
+              Año {year}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-1.5">
           <button
@@ -78,7 +88,7 @@ export function MonthlyChart({
       </div>
 
       {/* ── chart ── */}
-      <div className="relative select-none">
+      <div className="relative select-none bg-slate-50/60 dark:bg-slate-800/40 rounded-2xl p-3 pb-0">
         <svg
           viewBox={`0 0 ${w} ${h}`}
           className="w-full h-auto overflow-visible"
@@ -86,8 +96,8 @@ export function MonthlyChart({
         >
           <defs>
             <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.04" />
             </linearGradient>
           </defs>
 

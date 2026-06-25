@@ -22,11 +22,11 @@ export function StatsCards({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
       <DashboardCard
         decoration={
-          <div className="w-24 lg:w-32 h-24 lg:h-32 bg-blue-50 dark:bg-blue-900/20 rounded-full -mr-12 lg:-mr-16 -mt-12 lg:-mt-16" />
+          <div className="w-24 lg:w-32 h-24 lg:h-32 bg-slate-900/5 dark:bg-blue-900/20 rounded-full -mr-12 lg:-mr-16 -mt-12 lg:-mt-16" />
         }
       >
         <div className="flex items-center gap-2 lg:gap-3 mb-4 lg:mb-6">
-          <div className="w-10 lg:w-12 h-10 lg:h-12 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl lg:rounded-2xl flex items-center justify-center">
+          <div className="w-10 lg:w-12 h-10 lg:h-12 bg-slate-900 dark:bg-slate-700 text-white rounded-xl lg:rounded-2xl flex items-center justify-center shadow-xl shadow-slate-900/20 dark:shadow-none">
             <Calendar className="w-5 lg:w-6 h-5 lg:h-6" />
           </div>
           <span className="text-[9px] lg:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">

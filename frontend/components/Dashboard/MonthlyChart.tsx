@@ -1,6 +1,8 @@
-import { cn, formatCurrency } from '../../lib/utils';
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DashboardCard } from './DashboardCard';
+import { cn } from '../../lib/utils';
+import { smoothPath, formatY } from '../../lib/chartUtils';
 
 interface MonthlyChartProps {
   monthlyData: { label: string; value: number }[];
@@ -17,83 +19,193 @@ export function MonthlyChart({
   maxVal,
   onYearChange,
 }: MonthlyChartProps) {
+  const [tooltip, setTooltip] = useState<{ x: number; label: string; value: string } | null>(null);
+
   const isCurrentYear = year === new Date().getFullYear();
+
+  // chart layout
+  const pad = { top: 16, right: 8, bottom: 32, left: 40 };
+  const w = 600;
+  const h = 220;
+  const chartW = w - pad.left - pad.right;
+  const chartH = h - pad.top - pad.bottom;
+
+  // grid lines (3 horizontal)
+  const gridVals = [0, maxVal / 2, maxVal].map(v => Math.round(v / 1000) * 1000 || 1000);
+
+  // map data → SVG coords
+  const points = monthlyData.map((d, i) => ({
+    x: pad.left + (i / Math.max(monthlyData.length - 1, 1)) * chartW,
+    y: pad.top + chartH - (maxVal > 0 ? (d.value / maxVal) * chartH : 0),
+    value: d.value,
+    label: d.label,
+    isCurrent: i === currentMonth && isCurrentYear,
+  }));
+
+  const linePath = smoothPath(points);
+  const areaPath = `${linePath} L${points[points.length - 1].x},${pad.top + chartH} L${points[0].x},${pad.top + chartH} Z`;
 
   return (
     <DashboardCard>
-      <div className="flex items-center justify-between mb-6 lg:mb-8">
+      {/* ── header ── */}
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-lg lg:text-xl font-black tracking-tight leading-none text-slate-900 dark:text-white">
+          <h2 className="text-lg lg:text-xl font-black tracking-tight text-slate-900 dark:text-white">
             Rendimiento
           </h2>
-          <p className="text-[9px] lg:text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-1 lg:mt-2">
-            {`Año ${year}`}
+          <p className="text-[9px] lg:text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+            Año {year}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => onYearChange(year - 1)}
-            className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center transition-all"
+            className="w-8 h-8 lg:w-9 lg:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center transition-all"
           >
             <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
           </button>
-          <span className="text-sm lg:text-base font-black text-slate-900 dark:text-white min-w-[50px] text-center">
+          <span className="text-sm font-black text-slate-900 dark:text-white min-w-[44px] text-center">
             {year}
           </span>
           <button
             onClick={() => onYearChange(year + 1)}
             disabled={year >= new Date().getFullYear()}
-            className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-8 h-8 lg:w-9 lg:h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
           </button>
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute left-0 top-0 bottom-6 w-8 flex flex-col justify-between text-[9px] text-slate-400 font-medium pointer-events-none">
-          <span>{formatCurrency(maxVal)}</span>
-          <span>{formatCurrency(maxVal / 2)}</span>
-          <span>$0</span>
-        </div>
+      {/* ── chart ── */}
+      <div className="relative select-none">
+        <svg
+          viewBox={`0 0 ${w} ${h}`}
+          className="w-full h-auto overflow-visible"
+          style={{ maxHeight: 180 }}
+        >
+          <defs>
+            <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
 
-        <div className="flex items-end justify-center h-40 lg:h-56 gap-px lg:gap-1 pl-6 lg:pl-10">
-          {monthlyData.map((d, i) => {
-            const heightPct = (d.value / maxVal) * 100;
-            const barFlex = Math.max(heightPct, 2);
-            const spacerFlex = 100 - barFlex;
-            const isCurrent = i === currentMonth && isCurrentYear;
-
+          {/* grid lines */}
+          {gridVals.map((val, i) => {
+            const y = pad.top + chartH - (val / maxVal) * chartH;
             return (
-              <div
-                key={i}
-                className="flex-1 flex flex-col items-center group relative h-full lg:max-w-[56px]"
-              >
-                <div className="absolute -top-8 lg:-top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 dark:bg-slate-700 text-white text-[10px] lg:text-xs font-bold px-2 py-1 rounded-lg z-20 pointer-events-none whitespace-nowrap shadow-lg">
-                  {d.label}: {formatCurrency(d.value)}
-                </div>
-                <div className="w-full" style={{ flex: spacerFlex }} />
-                <div
-                  className={cn(
-                    "w-full rounded-xl lg:rounded-2xl transition-all duration-500",
-                    isCurrent
-                      ? "bg-blue-600 shadow-lg shadow-blue-100 dark:shadow-none"
-                      : "bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600",
-                  )}
-                  style={{ flex: barFlex }}
+              <g key={i}>
+                <line
+                  x1={pad.left}
+                  x2={w - pad.right}
+                  y1={y}
+                  y2={y}
+                  stroke="currentColor"
+                  className="text-slate-200 dark:text-slate-700"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
                 />
-                <span
-                  className={cn(
-                    "text-[9px] lg:text-[10px] font-medium lg:font-bold uppercase tracking-widest transition-colors",
-                    isCurrent ? "text-blue-600 lg:scale-110" : "text-slate-400",
-                  )}
+                <text
+                  x={pad.left - 8}
+                  y={y + 4}
+                  textAnchor="end"
+                  className="fill-slate-400 dark:fill-slate-500"
+                  fontSize="10"
                 >
-                  <span className="lg:hidden">{d.label.charAt(0)}</span>
-                  <span className="hidden lg:inline">{d.label}</span>
-                </span>
-              </div>
+                  {formatY(val)}
+                </text>
+              </g>
             );
           })}
+
+          {/* area fill */}
+          {monthlyData.some(d => d.value > 0) && (
+            <path
+              d={areaPath}
+              fill="url(#area-grad)"
+              className="text-blue-500"
+            />
+          )}
+
+          {/* line */}
+          {monthlyData.some(d => d.value > 0) && (
+            <path
+              d={linePath}
+              fill="none"
+              className="text-blue-500"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )}
+
+          {/* dots + hit zones */}
+          {points.map((p, i) => (
+            <g key={i}>
+              {/* invisible wider hit zone for hover */}
+              <rect
+                x={p.x - 22}
+                y={pad.top}
+                width={44}
+                height={chartH}
+                fill="transparent"
+                onMouseEnter={() =>
+                  setTooltip({ x: p.x, label: p.label, value: `$${p.value.toLocaleString('es-AR')}` })
+                }
+                onMouseLeave={() => setTooltip(null)}
+                className="cursor-pointer"
+              />
+              {p.value > 0 && (
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={p.isCurrent ? 5 : 3.5}
+                  fill="white"
+                  stroke="currentColor"
+                  strokeWidth={p.isCurrent ? 3 : 2}
+                  className={cn(
+                    'transition-all duration-200',
+                    p.isCurrent ? 'text-blue-600' : 'text-blue-400',
+                  )}
+                />
+              )}
+            </g>
+          ))}
+        </svg>
+
+        {/* tooltip */}
+        {tooltip && (
+          <div
+            className="absolute -translate-x-1/2 pointer-events-none z-20 transition-all duration-150"
+            style={{
+              left: `${(tooltip.x / w) * 100}%`,
+              top: '-8px',
+            }}
+          >
+            <div className="bg-slate-900 dark:bg-slate-700 text-white text-[10px] lg:text-xs font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-xl">
+              {tooltip.label}: {tooltip.value}
+            </div>
+          </div>
+        )}
+
+        {/* month labels */}
+        <div className="flex justify-between px-0 mt-1" style={{ paddingLeft: `${(pad.left / w) * 100}%`, paddingRight: `${(pad.right / w) * 100}%` }}>
+          {monthlyData.map((d, i) => (
+            <span
+              key={i}
+              className={cn(
+                'text-[8px] lg:text-[10px] font-bold uppercase tracking-widest text-center',
+                i === currentMonth && isCurrentYear
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-slate-400 dark:text-slate-500',
+              )}
+            >
+              <span className="lg:hidden">{d.label.charAt(0)}</span>
+              <span className="hidden lg:inline">{d.label}</span>
+            </span>
+          ))}
         </div>
       </div>
     </DashboardCard>

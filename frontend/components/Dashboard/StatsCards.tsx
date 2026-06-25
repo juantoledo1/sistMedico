@@ -29,7 +29,7 @@ export function StatsCards({
           <div className="w-10 lg:w-12 h-10 lg:h-12 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl lg:rounded-2xl flex items-center justify-center">
             <Calendar className="w-5 lg:w-6 h-5 lg:h-6" />
           </div>
-          <span className="text-[9px] lg:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+          <span className="text-[9px] lg:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
             Balance del Mes
           </span>
         </div>

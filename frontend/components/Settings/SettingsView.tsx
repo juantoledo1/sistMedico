@@ -182,7 +182,7 @@ const SettingItem = ({ icon, label, value, onClick, disabled = false }: {
       <span className="font-bold text-slate-700 dark:text-slate-200 truncate">{label}</span>
     </div>
     <div className="flex items-center gap-2">
-      <span className="text-sm font-semibold text-slate-400 dark:text-slate-500 truncate max-w-[120px]">{value}</span>
+      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[120px]">{value}</span>
       <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
     </div>
   </button>

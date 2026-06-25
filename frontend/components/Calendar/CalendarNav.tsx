@@ -24,7 +24,7 @@ export function CalendarNav({
           onClick={onPrevMonth}
           className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"
         >
-          <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-300" />
         </button>
         <button
           onClick={onGoToToday}
@@ -36,7 +36,7 @@ export function CalendarNav({
           onClick={onNextMonth}
           className="p-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors"
         >
-          <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-300" />
         </button>
       </div>
       <h3 className="text-lg font-black text-slate-900 dark:text-white capitalize">

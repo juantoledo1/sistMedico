@@ -53,7 +53,7 @@ export function MonthlyChart({
           <h2 className="text-lg lg:text-xl font-black tracking-tight text-slate-900 dark:text-white">
             Rendimiento
           </h2>
-          <p className="text-[9px] lg:text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+              <p className="text-[9px] lg:text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">
             Año {year}
           </p>
         </div>
@@ -102,7 +102,7 @@ export function MonthlyChart({
                   y1={y}
                   y2={y}
                   stroke="currentColor"
-                  className="text-slate-200 dark:text-slate-700"
+                  className="text-slate-300 dark:text-slate-600"
                   strokeWidth="1"
                   strokeDasharray="4 4"
                 />
@@ -110,7 +110,7 @@ export function MonthlyChart({
                   x={pad.left - 8}
                   y={y + 4}
                   textAnchor="end"
-                  className="fill-slate-400 dark:fill-slate-500"
+                  className="fill-slate-500 dark:fill-slate-400"
                   fontSize="10"
                 >
                   {formatY(val)}
@@ -197,9 +197,9 @@ export function MonthlyChart({
               key={i}
               className={cn(
                 'text-[8px] lg:text-[10px] font-bold uppercase tracking-widest text-center',
-                i === currentMonth && isCurrentYear
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-slate-400 dark:text-slate-500',
+                  i === currentMonth && isCurrentYear
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-slate-500 dark:text-slate-400',
               )}
             >
               <span className="lg:hidden">{d.label.charAt(0)}</span>

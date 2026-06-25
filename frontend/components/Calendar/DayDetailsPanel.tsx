@@ -32,7 +32,7 @@ export function DayDetailsPanel({ selectedDay, shifts, t, locale, onOpenForm, on
             <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight truncate">
               {isToday(selectedDay) ? t.hoy : format(selectedDay, 'EEEE d', { locale })}
             </h3>
-            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em] mt-1">
+            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-[0.2em] mt-1">
               {shifts.length} {t.turnos} registrados
             </p>
          </div>
@@ -120,7 +120,7 @@ export function DayDetailsPanel({ selectedDay, shifts, t, locale, onOpenForm, on
             </div>
             <div className="space-y-1">
               <p className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Sin registros</p>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Tocá para añadir actividad</p>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Tocá para añadir actividad</p>
             </div>
             <button onClick={() => onOpenForm(format(selectedDay, 'yyyy-MM-dd'))}
               className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline pt-2">Registrar ahora</button>

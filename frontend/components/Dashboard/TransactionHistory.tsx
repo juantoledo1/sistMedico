@@ -47,7 +47,7 @@ export function TransactionHistory({
                 <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate max-w-[120px] lg:max-w-[140px] tracking-tight">
                   {tx.institution}
                 </h4>
-                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-widest">
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-widest">
                   {tx.date}
                 </p>
               </div>
@@ -68,8 +68,8 @@ export function TransactionHistory({
                 className={cn(
                   "text-[8px] lg:text-[9px] font-medium uppercase tracking-widest",
                   tx.status === PaymentStatus.PAID
-                    ? "text-green-500"
-                    : "text-orange-500",
+                    ? "text-green-600"
+                    : "text-orange-600",
                 )}
               >
                 {tx.status === PaymentStatus.PAID ? pagadosLabel : pendientesLabel}

@@ -133,7 +133,7 @@ export function CalendarView({ transactions, onOpenForm, onDelete, settings, emb
       <header className="hidden lg:flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className={cn("text-3xl lg:text-4xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.turnos}</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] lg:text-[10px] mt-2 opacity-60">
+          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] lg:text-[10px] mt-2 opacity-80">
             {format(currentDate, 'MMMM yyyy', { locale })}
           </p>
         </div>

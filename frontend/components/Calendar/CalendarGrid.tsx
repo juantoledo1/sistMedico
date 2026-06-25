@@ -33,7 +33,7 @@ export function CalendarGrid({
       <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
         {dayNames.map((dayName, dIdx) => (
           <div key={`header-${dIdx}`} className="py-3 lg:py-4 text-center">
-            <span className="text-[9px] lg:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            <span className="text-[9px] lg:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
               {dayName}
             </span>
           </div>
@@ -109,7 +109,7 @@ export function CalendarGrid({
                   </div>
                 ))}
                 {shifts.length > 2 && (
-                  <div className="hidden lg:block text-[7px] text-center font-black text-slate-400 dark:text-slate-500">
+                  <div className="hidden lg:block text-[7px] text-center font-black text-slate-500 dark:text-slate-400">
                     + {shifts.length - 2}
                   </div>
                 )}

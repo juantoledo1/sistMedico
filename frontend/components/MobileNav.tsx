@@ -33,7 +33,7 @@ export function MobileNav({ activeView, onNavigate, onLogout, labels }: MobileNa
               "flex flex-col items-center gap-1.5 transition-all duration-300 relative",
               activeView === view
                 ? "text-blue-600 dark:text-blue-400 scale-110"
-                : "text-slate-400 dark:text-slate-500",
+                : "text-slate-500 dark:text-slate-400",
             )}
           >
             {icon}

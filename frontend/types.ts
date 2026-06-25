@@ -147,20 +147,3 @@ export interface ActividadStats {
   anio_actual: number;
 }
 
-// Added StitchType and StitchBlock to fix import errors in creative components
-export enum StitchType {
-  TEXT = 'TEXT',
-  IMAGE = 'IMAGE',
-  VIDEO = 'VIDEO',
-  AUDIO = 'AUDIO'
-}
-
-export interface StitchBlock {
-  id: string;
-  name: string;
-  type: StitchType;
-  prompt: string;
-  isGenerating: boolean;
-  output: string;
-  error?: string;
-}

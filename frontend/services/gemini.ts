@@ -1,3 +1,6 @@
+// @deprecated — requiere GEMINI_API_KEY en .env para funcionar.
+// Usa process.env.API_KEY (no VITE_*) — no funciona con Vite sin configuración extra.
+// El insight financiero queda en fallback hardcoded cuando no hay key.
 
 import { GoogleGenAI } from "@google/genai";
 import { Transaction } from "../types";

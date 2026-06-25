@@ -30,7 +30,7 @@ export function CalendarGrid({
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-2xl shadow-slate-200/40 dark:shadow-none overflow-hidden">
-      <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+      <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
         {dayNames.map((dayName, dIdx) => (
           <div key={`header-${dIdx}`} className="py-3 lg:py-4 text-center">
             <span className="text-[9px] lg:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
@@ -40,7 +40,7 @@ export function CalendarGrid({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 divide-x divide-y divide-slate-50 dark:divide-slate-700">
+      <div className="grid grid-cols-7 divide-x divide-y divide-slate-200 dark:divide-slate-700">
         {calendarDays.map((day, dayIdx) => {
           const shifts = getShiftsForDay(day, transactions);
           const isCurrentMonth = isSameMonth(day, monthStart);

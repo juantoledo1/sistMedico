@@ -162,7 +162,7 @@ export function MonthlyChart({
                   cx={p.x}
                   cy={p.y}
                   r={p.isCurrent ? 5 : 3.5}
-                  fill="white"
+                  fill="currentColor"
                   stroke="currentColor"
                   strokeWidth={p.isCurrent ? 3 : 2}
                   className={cn(

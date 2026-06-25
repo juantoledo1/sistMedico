@@ -24,7 +24,7 @@ export function ReportsFilterBar({
   const selectClass = "bg-transparent font-medium text-slate-700 dark:text-slate-200 focus:outline-none text-sm";
 
   return (
-    <div className="flex flex-wrap gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
+    <div className="flex flex-wrap gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
       <div className="flex items-center gap-2">
         <Calendar className="w-4 h-4 text-slate-400" />
         <select value={periodFilter} onChange={(e) => onPeriodChange(e.target.value)} className={selectClass}>

@@ -54,7 +54,7 @@ function App() {
 
   return (
     <div
-      className={`min-h-screen bg-[#F8FAFC] text-[#1E293B] font-sans flex flex-col lg:flex-row transition-colors duration-300 ${settings.darkMode ? "bg-[#0F172A] text-slate-100 dark" : ""}`}
+      className={`min-h-screen bg-slate-100 text-[#1E293B] font-sans flex flex-col lg:flex-row transition-colors duration-300 ${settings.darkMode ? "bg-[#0F172A] text-slate-100 dark" : ""}`}
     >
       <Sidebar
         activeView={activeView}

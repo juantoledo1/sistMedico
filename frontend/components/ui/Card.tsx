@@ -16,7 +16,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden",
+        "bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden",
         padding === 'none' && "p-0",
         padding === 'sm' && "p-4",
         padding === 'md' && "p-5",

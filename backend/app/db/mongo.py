@@ -85,6 +85,13 @@ async def create_indexes():
             name="institution_index"
         )
         
+        # Índice compuesto para queries de deudas (status + userId)
+        # Protege contra el límite de 32 MB sort memory en Atlas Free
+        await _database.actividades.create_index(
+            [("status", 1), ("userId", 1)],
+            name="status_user_index"
+        )
+        
         # Índice compuesto para instituciones (userId + name)
         await _database.institutions.create_index(
             [("userId", 1), ("name", 1)],

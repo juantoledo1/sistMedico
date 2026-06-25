@@ -149,7 +149,7 @@ export function SettingsView({
         <p className="text-slate-400 text-xs font-medium">MedFlow Pro v1.0.5 • © 2026</p>
       </div>
 
-      <PasswordModal open={showChangePassword} onClose={() => setShowChangePassword(false)} />
+      <PasswordModal open={showChangePassword} onClose={() => setShowChangePassword(false)} language={settings.language} />
     </div>
   );
 };

@@ -88,7 +88,17 @@ salida: "Salida",
     nombreRequerido: "El nombre es obligatorio",
     emailInvalido: "Email inválido",
     sessionExpired: "Sesión expirada",
-    sessionExpiredDesc: "Tu sesión venció. Por seguridad, volvé a iniciar sesión."
+    sessionExpiredDesc: "Tu sesión venció. Por seguridad, volvé a iniciar sesión.",
+    cancelar: "Cancelar",
+    cambiarContrasena: "Cambiar contraseña",
+    passwordModalDesc: "Ingresá tu contraseña actual y una nueva",
+    contrasenaActual: "Contraseña actual",
+    contrasenaActualPlaceholder: "Tu contraseña actual",
+    nuevaContrasena: "Nueva contraseña",
+    nuevaContrasenaPlaceholder: "Mín. 8 caracteres",
+    confirmarNuevaContrasena: "Confirmar nueva contraseña",
+    confirmarNuevaContrasenaPlaceholder: "Repetí la nueva contraseña",
+    contrasenaActualizada: "Contraseña actualizada correctamente"
   },
   en: {
     inicio: "Home",
@@ -178,7 +188,17 @@ salida: "Salida",
     nombreRequerido: "Name is required",
     emailInvalido: "Invalid email",
     sessionExpired: "Session expired",
-    sessionExpiredDesc: "Your session has expired. Please sign in again to continue."
+    sessionExpiredDesc: "Your session has expired. Please sign in again to continue.",
+    cancelar: "Cancel",
+    cambiarContrasena: "Change Password",
+    passwordModalDesc: "Enter your current password and a new one",
+    contrasenaActual: "Current Password",
+    contrasenaActualPlaceholder: "Your current password",
+    nuevaContrasena: "New Password",
+    nuevaContrasenaPlaceholder: "Min. 8 characters",
+    confirmarNuevaContrasena: "Confirm New Password",
+    confirmarNuevaContrasenaPlaceholder: "Repeat the new password",
+    contrasenaActualizada: "Password updated successfully"
   }
 };
 

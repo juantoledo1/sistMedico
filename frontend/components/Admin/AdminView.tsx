@@ -1,10 +1,12 @@
 import { UserSettings } from "../../types";
-import { ArrowLeft, Search, Loader2, Shield } from "lucide-react";
+import { ArrowLeft, Search, Loader2, Shield, BellPlus } from "lucide-react";
 import { Button } from "../ui/Button";
 import { AdminUserTable } from "./AdminUserTable";
 import { AdminConfirmModal } from "./AdminConfirmModal";
 import { AdminPasswordModal } from "./AdminPasswordModal";
+import { AdminNotifyModal } from "./AdminNotifyModal";
 import { useAdminUsers } from "./useAdminUsers";
+import { useState } from "react";
 
 interface AdminViewProps {
   settings: UserSettings;
@@ -22,6 +24,8 @@ export function AdminView({ settings, onBack }: AdminViewProps) {
     showPasswordModal, setShowPasswordModal, generatedPassword, passwordUserName, passwordUserEmail,
     passwordCopied, copyPassword, handleToggleActive,
   } = useAdminUsers();
+
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -58,6 +62,12 @@ export function AdminView({ settings, onBack }: AdminViewProps) {
               <span className={`ml-2 text-xs ${filter === btn.key ? "text-white/80" : "text-slate-400"}`}>{btn.count}</span>
             </Button>
           ))}
+          <div className="ml-auto">
+            <Button size="sm" variant="primary" onClick={() => setShowNotifyModal(true)}>
+              <BellPlus className="w-4 h-4" />
+              Notificar
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -82,6 +92,14 @@ export function AdminView({ settings, onBack }: AdminViewProps) {
       <AdminPasswordModal show={showPasswordModal} password={generatedPassword} userName={passwordUserName}
         userEmail={passwordUserEmail} copied={passwordCopied} onCopy={copyPassword}
         onClose={() => setShowPasswordModal(false)} />
+
+      <AdminNotifyModal
+        show={showNotifyModal}
+        onClose={() => setShowNotifyModal(false)}
+        users={filteredUsers.map(u => ({ id: u.id, full_name: u.full_name || u.email, email: u.email }))}
+        currentFilter={filter}
+        language={settings.language}
+      />
     </div>
   );
 };

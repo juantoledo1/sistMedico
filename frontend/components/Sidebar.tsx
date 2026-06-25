@@ -1,14 +1,16 @@
-import { Shield, Settings, LayoutGrid, Calendar, BarChart3, LogOut, Sparkles } from 'lucide-react';
+import { Shield, Settings, LayoutGrid, Calendar, BarChart3, LogOut, Sparkles, Bell } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface NavButtonProps {
   active: boolean;
   label: string;
   icon: React.ReactNode;
   onClick: () => void;
+  badge?: number;
 }
 
-const NavButton = ({ active, label, icon, onClick }: NavButtonProps) => (
+const NavButton = ({ active, label, icon, onClick, badge }: NavButtonProps) => (
   <button
     onClick={onClick}
     className={cn(
@@ -19,7 +21,12 @@ const NavButton = ({ active, label, icon, onClick }: NavButtonProps) => (
     )}
   >
     {icon}
-    <span className="tracking-tight">{label}</span>
+    <span className="tracking-tight flex-1 text-left">{label}</span>
+    {badge !== undefined && badge > 0 && (
+      <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+        {badge}
+      </span>
+    )}
   </button>
 );
 
@@ -37,6 +44,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeView, isAdmin, insight, onNavigate, onLogout, labels }: SidebarProps) {
+  const { unreadCount } = useNotifications();
+
   return (
     <aside className="hidden lg:flex w-64 bg-white border-r border-slate-200 flex-col p-6 sticky top-0 h-screen transition-colors duration-300 dark:bg-slate-900 dark:border-slate-800">
       <div className="flex items-center gap-3 mb-10 px-2">
@@ -67,6 +76,7 @@ export function Sidebar({ activeView, isAdmin, insight, onNavigate, onLogout, la
               onClick={() => onNavigate("perfil")}
               label={labels.ajustes}
               icon={<Settings className="w-5 h-5" />}
+              badge={unreadCount}
             />
           </>
         ) : (
@@ -94,6 +104,7 @@ export function Sidebar({ activeView, isAdmin, insight, onNavigate, onLogout, la
               onClick={() => onNavigate("perfil")}
               label={labels.ajustes}
               icon={<Settings className="w-5 h-5" />}
+              badge={unreadCount}
             />
           </>
         )}

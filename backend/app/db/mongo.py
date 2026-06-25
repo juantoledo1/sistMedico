@@ -98,6 +98,16 @@ async def create_indexes():
             name="user_institution_index"
         )
         
+        # Índices para notificaciones
+        await _database.notifications.create_index(
+            [("userId", 1), ("read", 1)],
+            name="notif_user_read_index"
+        )
+        await _database.notifications.create_index(
+            [("createdAt", -1)],
+            name="notif_created_index"
+        )
+        
         logger.info("✅ Índices creados")
         
     except Exception as e:

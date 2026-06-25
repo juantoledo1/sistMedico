@@ -1,0 +1,41 @@
+# SDD — OpenSpec Config
+project: sistmedico
+description: MedFlow Pro — SaaS de gestión financiera para guardias médicas
+init_date: 2026-06-25
+
+stack:
+  frontend:
+    framework: React 19
+    language: TypeScript 5.8 (strict)
+    build: Vite 6
+    styling: Tailwind CSS 4
+    test: vitest
+    test_command: "cd frontend && npm test"
+    lint: tsc --noEmit
+  backend:
+    framework: FastAPI
+    language: Python 3.11
+    database: MongoDB 7.0 (async via Motor)
+    auth: JWT (access + refresh), bcrypt 12 rounds
+    test: pytest
+    test_command: "cd backend && python3 -m pytest tests/ -v"
+    validation: Pydantic v2
+  infra:
+    orchestration: Docker Compose
+    services: [medflow_mongo, medflow_api]
+
+strict_tdd: true
+
+testing:
+  frontend:
+    runner: vitest
+    layers: [unit]
+    coverage: false
+  backend:
+    runner: pytest
+    layers: [unit]
+    coverage: false
+
+persistence:
+  mode: openspec
+  path: openspec/

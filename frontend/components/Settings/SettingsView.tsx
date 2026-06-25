@@ -7,6 +7,7 @@ import { Label } from '../ui/Label';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { PasswordModal } from './PasswordModal';
+import { NotificationsList } from './NotificationsList';
 
 interface SettingsViewProps {
   profile: UserProfile;
@@ -25,6 +26,7 @@ export function SettingsView({
   onUpdateSettings,
 }: SettingsViewProps) {
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const t = translations[settings.language];
   const avatars = {
@@ -139,10 +141,15 @@ export function SettingsView({
           <SettingItem 
             icon={<Bell className="w-5 h-5" />} 
             label={t.notificaciones} 
-            value={t.proximamente} 
-            disabled
+            value={showNotifications ? '' : t.notificaciones}
+            onClick={() => setShowNotifications(!showNotifications)}
           />
         </div>
+        {showNotifications && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <NotificationsList language={settings.language} />
+          </div>
+        )}
       </Card>
 
       <div className="text-center pt-4">

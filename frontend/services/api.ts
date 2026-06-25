@@ -266,6 +266,36 @@ class APIService {
       method: 'DELETE',
     });
   }
+
+  // ==================== NOTIFICACIONES ====================
+  async createNotification(data: {
+    target_user_id?: string | null;
+    target_all?: boolean;
+    type: string;
+    title: string;
+    message: string;
+  }) {
+    return this.request<{created: number; message: string}>('/api/notifications', {
+      method: 'POST',
+      body: data,
+    });
+  }
+
+  async getMyNotifications(unreadOnly = false) {
+    return this.request<import('../types').Notification[]>(
+      `/api/notifications/mine?unread_only=${unreadOnly}`,
+    );
+  }
+
+  async getUnreadCount() {
+    return this.request<{count: number}>('/api/notifications/unread-count');
+  }
+
+  async markNotificationRead(id: string) {
+    return this.request<{message: string}>(`/api/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
 }
 
 export const api = new APIService();

@@ -135,6 +135,18 @@ export interface DashboardSummary {
   grandTotal: number;
 }
 
+// ==================== NOTIFICACIONES ====================
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'info' | 'warning' | 'alert';
+  title: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+}
+
 // Backend Stats API Response
 export interface ActividadStats {
   total_ingresos: number;

@@ -61,15 +61,19 @@ sist_med/
 │   │   ├── Admin/         # User management panel
 │   │   └── ui/            # Button, Input, Card, Select, Modal
 │   ├── hooks/             # Custom hooks (useAuth, useTransactions, useAppState)
-│   ├── services/          # API client, Gemini, outbox
+│   ├── lib/               # Pure utilities: chartUtils, format helpers
+│   ├── services/          # API client, Gemini, outbox (legacy)
 │   └── types.ts           # Shared TypeScript types
 ├── backend/
+│   ├── tests/             # pytest: password validation, crypto helpers
 │   └── app/
 │       ├── core/          # Security (JWT/bcrypt), dependencies, utilities
 │       ├── db/            # MongoDB connection, indexes
 │       ├── models/        # Pydantic models (User, Actividad, Institution)
 │       ├── routers/       # API endpoints (auth, admin, actividades, institutions)
 │       └── services/      # Business logic (auth service)
+├── scripts/
+│   └── backup.sh          # Weekly mongodump (30-day retention)
 └── docker-compose.yml     # MongoDB + Backend
 ```
 
@@ -96,6 +100,16 @@ sist_med/
 ### Base de datos
 
 MongoDB 7.0 con Motor async. Colecciones: `users`, `actividades`, `institutions`.
+
+## Tests
+
+```bash
+# Frontend (vitest) — 10 tests
+cd frontend && npm test
+
+# Backend (pytest) — 18 tests
+cd backend && python3 -m pytest tests/ -v
+```
 
 ## API
 

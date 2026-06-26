@@ -137,10 +137,10 @@ export function CalendarView({ transactions, onOpenForm, onDelete, settings, emb
             {format(currentDate, 'MMMM yyyy', { locale })}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="hidden md:flex gap-2">
           <button
             onClick={() => onOpenForm()}
-            className="flex-1 md:flex-none text-[10px] lg:text-xs font-black uppercase tracking-widest bg-blue-600 text-white px-5 py-3 lg:px-6 lg:py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+            className="text-[10px] lg:text-xs font-black uppercase tracking-widest bg-blue-600 text-white px-5 py-3 lg:px-6 lg:py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
           >
             + {t.nuevoTurno}
           </button>

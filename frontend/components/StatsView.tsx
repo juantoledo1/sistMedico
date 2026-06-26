@@ -116,7 +116,7 @@ export function StatsView({ onBack, settings }: StatsViewProps) {
   ];
 
   return (
-    <div className={cn("flex-1 p-6 lg:p-8 overflow-y-auto", settings.darkMode ? "bg-slate-900" : "bg-slate-50")}>
+    <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -145,8 +145,8 @@ export function StatsView({ onBack, settings }: StatsViewProps) {
             <div
               key={idx}
               className={cn(
-                "rounded-2xl p-6 shadow-lg",
-                settings.darkMode ? "bg-slate-800" : "bg-white"
+                "rounded-2xl p-6 shadow-xl shadow-slate-200/50 border border-slate-200",
+                settings.darkMode ? "bg-slate-800 dark:border-slate-700" : "bg-white"
               )}
             >
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-4", card.color)}>

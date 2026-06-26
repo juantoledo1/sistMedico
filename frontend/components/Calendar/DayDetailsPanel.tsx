@@ -25,7 +25,7 @@ export function DayDetailsPanel({ selectedDay, shifts, t, locale, onOpenForm, on
   return (
     <div className={cn(
       "space-y-4 flex flex-col animate-in slide-in-from-right-4 duration-500",
-      !isModal && "bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[400px]"
+      !isModal && "bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-300 dark:border-slate-700 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[400px]"
     )}>
       <div className="flex items-center justify-between">
          <div className="min-w-0">
@@ -55,7 +55,7 @@ export function DayDetailsPanel({ selectedDay, shifts, t, locale, onOpenForm, on
       <div className="space-y-3 flex-1">
         {shifts.map(shift => (
           <div key={shift.id}
-            className="group p-4 rounded-[2rem] bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-blue-100 dark:hover:border-blue-900 transition-all space-y-3">
+            className="group p-4 rounded-[2rem] bg-slate-100 dark:bg-slate-900/50 border border-transparent hover:border-blue-100 dark:hover:border-blue-900 transition-all space-y-3">
             <div className="flex justify-between items-start">
               <div className="flex-1 min-w-0">
                 <h4 className="font-black text-slate-900 dark:text-white text-sm tracking-tight truncate leading-none">{shift.institution}</h4>

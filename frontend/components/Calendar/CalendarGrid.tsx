@@ -29,7 +29,7 @@ export function CalendarGrid({
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-2xl shadow-slate-200/40 dark:shadow-none overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-300 dark:border-slate-700 shadow-2xl shadow-slate-200/40 dark:shadow-none overflow-hidden">
       <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
         {dayNames.map((dayName, dIdx) => (
           <div key={`header-${dIdx}`} className="py-3 lg:py-4 text-center">

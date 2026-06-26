@@ -38,7 +38,7 @@ export function SettingsView({
   };
 
   return (
-    <div className="p-4 lg:p-10 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32">
+    <div className="p-4 lg:p-10 max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32">
       <header className="space-y-1">
         <h1 className={cn("text-3xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.ajustes}</h1>
         <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] opacity-60 leading-none">{t.preferencias}</p>

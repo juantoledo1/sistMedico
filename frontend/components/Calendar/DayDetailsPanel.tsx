@@ -67,7 +67,7 @@ export function DayDetailsPanel({ selectedDay, shifts, t, locale, onOpenForm, on
                     {shift.type === ShiftType.ACTIVE ? 'Guardia' : shift.type === ShiftType.CONSULTATION ? 'Proced.' : 'Intercons.'}
                   </span>
                   {shift.startTime && shift.endTime && (
-                    <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 truncate max-w-[100px] lg:max-w-[180px] whitespace-nowrap">
                       {shift.startTime}→{shift.endTime}
                       {shift.endDate && shift.endDate !== shift.date && ` (${shift.endDate})`}
                     </span>

@@ -77,7 +77,7 @@ export function ReportsPrintView({
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           <div style={{ textAlign: 'center', ...s.statBox }}>
             <p style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', ...s.catLabel, margin: 0 }}>Total</p>
             <p style={{ fontSize: '1.25rem', fontWeight: 900, ...s.catValue, margin: 0 }}>{formatCurrency(totalInvoiced)}</p>

@@ -25,7 +25,7 @@ export function DayDetailsPanel({ selectedDay, shifts, t, locale, onOpenForm, on
   return (
     <div className={cn(
       "space-y-4 flex flex-col animate-in slide-in-from-right-4 duration-500",
-      !isModal && "bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-700 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[400px]"
+      !isModal && "bg-white dark:bg-slate-800 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[400px]"
     )}>
       <div className="flex items-center justify-between">
          <div className="min-w-0">

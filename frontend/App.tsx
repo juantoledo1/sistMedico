@@ -100,6 +100,7 @@ function App() {
               onOpenForm={openForm}
               onDelete={tx.handleDeleteTransaction}
               settings={settings}
+              onViewReports={() => handleViewChange("reportes")}
             />
           )}
           {activeView === "perfil" && (

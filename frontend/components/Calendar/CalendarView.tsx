@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format, addMonths, subMonths } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
-import { X } from 'lucide-react';
+import { X, Printer } from 'lucide-react';
 import { Transaction, PaymentStatus, UserSettings } from '../../types';
 import { cn } from '../../lib/utils';
 import { translations } from '../../translations';
@@ -16,9 +16,10 @@ interface CalendarViewProps {
   onDelete: (id: string) => void;
   settings: UserSettings;
   embedded?: boolean;
+  onViewReports?: () => void;
 }
 
-export function CalendarView({ transactions, onOpenForm, onDelete, settings, embedded }: CalendarViewProps) {
+export function CalendarView({ transactions, onOpenForm, onDelete, settings, embedded, onViewReports }: CalendarViewProps) {
   const t = translations[settings.language];
   const locale = settings.language === 'es' ? es : enUS;
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -131,13 +132,33 @@ export function CalendarView({ transactions, onOpenForm, onDelete, settings, emb
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto space-y-6 lg:space-y-8 animate-in fade-in duration-500 pb-32">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 lg:mb-0">
-        <div>
-          <h1 className={cn("text-2xl lg:text-4xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.guardias}</h1>
-          <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] lg:text-[10px] mt-2 opacity-80">
-            {format(currentDate, 'MMMM yyyy', { locale })}
-          </p>
+        <div className="flex items-center justify-between md:justify-start gap-3">
+          <div>
+            <h1 className={cn("text-2xl lg:text-4xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.guardias}</h1>
+            <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] lg:text-[10px] mt-2 opacity-80">
+              {format(currentDate, 'MMMM yyyy', { locale })}
+            </p>
+          </div>
+          {onViewReports && (
+            <button
+              onClick={onViewReports}
+              className="md:hidden w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm shrink-0"
+              title={t.reportes || 'Reportes'}
+            >
+              <Printer className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="hidden md:flex gap-2">
+          {onViewReports && (
+            <button
+              onClick={onViewReports}
+              className="text-[10px] lg:text-xs font-black uppercase tracking-widest bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-3 lg:px-5 lg:py-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
+            >
+              <Printer className="w-4 h-4 inline mr-1.5" />
+              {t.reportes || 'Reportes'}
+            </button>
+          )}
           <button
             onClick={() => onOpenForm()}
             className="text-[10px] lg:text-xs font-black uppercase tracking-widest bg-blue-600 text-white px-5 py-3 lg:px-6 lg:py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"

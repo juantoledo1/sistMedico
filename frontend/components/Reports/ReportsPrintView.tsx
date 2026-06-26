@@ -53,7 +53,7 @@ export function ReportsPrintView({
   onClose,
 }: ReportsPrintViewProps) {
   return (
-    <div style={{ padding: '1rem 2rem', maxWidth: '56rem', margin: '0 auto' }}>
+    <div style={{ padding: '1rem 2rem', maxWidth: '56rem', margin: '0 auto', overflowX: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }} className="print:hidden">
         <Button variant="secondary" size="sm" onClick={onClose}>
           <ArrowLeft className="w-4 h-4" />
@@ -138,7 +138,7 @@ export function ReportsPrintView({
                     {a.type === ShiftType.CONSULTATION && a.procedureName}
                     {a.type === ShiftType.PASSIVE && `${a.specialty}${a.patientLocation === 'extraservicio' ? ' (Extra)' : ''}`}
                     {a.type === ShiftType.ACTIVE && `${a.hours}h`}
-                    {a.notes && a.notes !== 'undefined' && a.notes !== 'null' && a.notes.trim().length > 0 && <span style={{ display: 'block', ...s.tdNote, fontStyle: 'italic' }}>{'\uD83D\uDCDD'} {a.notes}</span>}
+                    {a.notes && !/undefined|null|NaN/i.test(a.notes) && a.notes.trim().length > 0 && <span style={{ display: 'block', ...s.tdNote, fontStyle: 'italic' }}>{'\uD83D\uDCDD'} {a.notes}</span>}
                   </td>
                   <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 500, ...s.td }}>{formatCurrency(a.amount)}</td>
                   <td style={{ padding: '0.5rem', textAlign: 'right', ...s.td }}>

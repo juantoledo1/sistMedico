@@ -128,7 +128,7 @@ function App() {
           activeView={activeView}
           onNavigate={handleViewChange}
           onLogout={auth.handleLogout}
-          labels={{ inicio: t.inicio, turnos: t.turnos, ajustes: t.ajustes }}
+          labels={{ inicio: t.inicio, turnos: t.guardias, ajustes: t.ajustes }}
         />
       </main>
 

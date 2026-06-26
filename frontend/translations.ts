@@ -12,7 +12,7 @@ export const translations = {
     rendimiento: "Rendimiento",
     ultimos6meses: "Últimos 6 meses",
     actividad: "Actividad",
-    nuevoTurno: "Nuevo Turno",
+    nuevoTurno: "Nuevo Guardia",
     reportes: "Reportes",
     guardias: "Guardias",
     registrarGuardia: "Registrar Guardia",

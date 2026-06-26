@@ -130,12 +130,20 @@ export function CalendarView({ transactions, onOpenForm, onDelete, settings, emb
 
   return (
     <div className="p-4 lg:p-10 max-w-7xl mx-auto space-y-6 lg:space-y-8 animate-in fade-in duration-500 pb-32">
-      <header className="hidden lg:flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2 lg:mb-0">
         <div>
-          <h1 className={cn("text-3xl lg:text-4xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.turnos}</h1>
+          <h1 className={cn("text-2xl lg:text-4xl font-black tracking-tight leading-none", settings.darkMode ? "text-white" : "text-slate-900")}>{t.guardias}</h1>
           <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[9px] lg:text-[10px] mt-2 opacity-80">
             {format(currentDate, 'MMMM yyyy', { locale })}
           </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onOpenForm()}
+            className="flex-1 md:flex-none text-[10px] lg:text-xs font-black uppercase tracking-widest bg-blue-600 text-white px-5 py-3 lg:px-6 lg:py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+          >
+            + {t.nuevoTurno || 'Registrar'}
+          </button>
         </div>
       </header>
       {content}

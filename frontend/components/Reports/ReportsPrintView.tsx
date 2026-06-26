@@ -94,7 +94,7 @@ export function ReportsPrintView({
 
         <div style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ fontWeight: 700, ...s.sectionTitle, marginBottom: '0.75rem' }}>Resumen por Tipo</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', fontSize: '0.875rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', fontSize: '0.875rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', ...s.chipBlue }}>
               <span style={{ fontWeight: 500 }}>Guardias:</span>
               <span style={{ fontWeight: 700 }}>{formatCurrency(totalGuardias)}</span>

@@ -141,7 +141,7 @@ export function useShiftForm(
             amount: extra.amount, date: fDate, institution,
             type: extra.type === 'procedimiento' ? ShiftType.CONSULTATION : ShiftType.PASSIVE,
             status: extra.status,
-            notes: `${extra.type === 'procedimiento' ? extra.procedureName : extra.specialty}${extra.notes ? ': ' + extra.notes : ''}`,
+            notes: [extra.type === 'procedimiento' ? extra.procedureName : extra.specialty, extra.notes].filter(Boolean).join(': '),
             procedureName: extra.type === 'procedimiento' ? extra.procedureName : undefined,
             specialty: extra.type === 'interconsulta' ? extra.specialty : undefined,
           });

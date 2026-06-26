@@ -112,7 +112,8 @@ export function ReportsPrintView({
 
         <div>
           <h3 style={{ fontWeight: 700, ...s.sectionTitle, marginBottom: '0.75rem' }}>Detalle de Actividades</h3>
-          <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', fontSize: '0.875rem', borderCollapse: 'collapse', minWidth: '500px' }}>
             <thead>
               <tr style={s.thead}>
                 <th style={{ textAlign: 'left', padding: '0.5rem', fontWeight: 700, ...s.th }}>Fecha</th>
@@ -137,7 +138,7 @@ export function ReportsPrintView({
                     {a.type === ShiftType.CONSULTATION && a.procedureName}
                     {a.type === ShiftType.PASSIVE && `${a.specialty}${a.patientLocation === 'extraservicio' ? ' (Extra)' : ''}`}
                     {a.type === ShiftType.ACTIVE && `${a.hours}h`}
-                    {a.notes && <span style={{ display: 'block', ...s.tdNote, fontStyle: 'italic' }}>{'\uD83D\uDCDD'} {a.notes}</span>}
+                    {a.notes && a.notes !== 'undefined' && a.notes !== 'null' && a.notes.trim().length > 0 && <span style={{ display: 'block', ...s.tdNote, fontStyle: 'italic' }}>{'\uD83D\uDCDD'} {a.notes}</span>}
                   </td>
                   <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 500, ...s.td }}>{formatCurrency(a.amount)}</td>
                   <td style={{ padding: '0.5rem', textAlign: 'right', ...s.td }}>
@@ -147,6 +148,7 @@ export function ReportsPrintView({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>

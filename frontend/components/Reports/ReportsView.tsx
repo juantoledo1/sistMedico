@@ -1,4 +1,4 @@
-import { Transaction, UserSettings } from '../../types';
+import { Transaction, UserProfile, UserSettings } from '../../types';
 import { CalendarView } from '../Calendar/CalendarView';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { translations } from '../../translations';
@@ -12,6 +12,7 @@ import { useReportsFilters } from './useReportsFilters';
 interface ReportsViewProps {
   transactions: Transaction[];
   settings: UserSettings;
+  profile: UserProfile;
   onBack: () => void;
   onOpenForm: (date?: string, tx?: Transaction) => void;
   onEdit: (tx: Transaction) => void;
@@ -19,7 +20,7 @@ interface ReportsViewProps {
   onUpdate: (id: string, updates: Partial<Transaction>) => void;
 }
 
-export function ReportsView({ transactions, settings, onBack, onOpenForm, onDelete }: ReportsViewProps) {
+export function ReportsView({ transactions, settings, profile, onBack, onOpenForm, onDelete }: ReportsViewProps) {
   const t = translations[settings.language];
 
   const {
@@ -32,18 +33,22 @@ export function ReportsView({ transactions, settings, onBack, onOpenForm, onDele
 
   if (showPrintView) {
     return (
-      <ReportsPrintView
-        periodLabel={periodLabels[periodFilter]}
-        institutionLabel={institutionFilter !== 'Todas' ? institutionFilter : ''}
-        totalInvoiced={totalInvoiced}
-        totalPaid={totalPaid}
-        totalPending={totalPending}
-        totalGuardias={totalGuardias}
-        totalProcedimientos={totalProcedimientos}
-        totalInterconsultas={totalInterconsultas}
-        actividades={filteredActividades}
-        onClose={() => setShowPrintView(false)}
-      />
+      <div className="fixed inset-0 z-[200] bg-white dark:bg-slate-900 print:bg-white" style={{ overflowY: 'auto' }}>
+        <ReportsPrintView
+          periodLabel={periodLabels[periodFilter]}
+          institutionLabel={institutionFilter !== 'Todas' ? institutionFilter : ''}
+          userName={profile.name}
+          userSpecialty={profile.specialty}
+          totalInvoiced={totalInvoiced}
+          totalPaid={totalPaid}
+          totalPending={totalPending}
+          totalGuardias={totalGuardias}
+          totalProcedimientos={totalProcedimientos}
+          totalInterconsultas={totalInterconsultas}
+          actividades={filteredActividades}
+          onClose={() => setShowPrintView(false)}
+        />
+      </div>
     );
   }
 

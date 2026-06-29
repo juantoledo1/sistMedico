@@ -81,6 +81,7 @@ function App() {
             <ReportsView
               transactions={tx.transactions}
               settings={settings}
+              profile={profile}
               onBack={() => handleViewChange("inicio")}
               onOpenForm={(date, t) => openForm(date, t)}
               onEdit={(t) => openForm(undefined, t)}

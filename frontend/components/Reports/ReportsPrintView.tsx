@@ -7,6 +7,8 @@ import { Button } from '../ui/Button';
 interface ReportsPrintViewProps {
   periodLabel: string;
   institutionLabel: string;
+  userName: string;
+  userSpecialty: string;
   totalInvoiced: number;
   totalPaid: number;
   totalPending: number;
@@ -43,6 +45,8 @@ const s = {
 export function ReportsPrintView({
   periodLabel,
   institutionLabel,
+  userName,
+  userSpecialty,
   totalInvoiced,
   totalPaid,
   totalPending,
@@ -54,7 +58,7 @@ export function ReportsPrintView({
 }: ReportsPrintViewProps) {
   return (
     <div style={{ padding: '1rem 2rem', maxWidth: '56rem', margin: '0 auto', overflowX: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }} className="print:hidden">
+      <div className="flex justify-between mb-8 print:hidden">
         <Button variant="secondary" size="sm" onClick={onClose}>
           <ArrowLeft className="w-4 h-4" />
           Volver
@@ -69,7 +73,12 @@ export function ReportsPrintView({
         <div style={{ textAlign: 'center', ...s.borderBottom, paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 900, ...s.h1, margin: 0 }}>MedFlow Pro</h1>
           <h2 style={{ fontSize: '1.125rem', fontWeight: 700, ...s.h2, marginTop: '0.25rem', marginBottom: 0 }}>Reporte de Actividad Profesional</h2>
-          <p style={{ fontSize: '0.875rem', ...s.subtitle, marginTop: '0.25rem', marginBottom: 0 }}>
+          {userName && (
+            <p style={{ fontSize: '1rem', fontWeight: 700, ...s.h1, marginTop: '0.75rem', marginBottom: '0.25rem' }}>
+              {userName}{userSpecialty ? ` — ${userSpecialty}` : ''}
+            </p>
+          )}
+          <p style={{ fontSize: '0.875rem', ...s.subtitle, marginTop: userName ? '0.25rem' : '0.25rem', marginBottom: 0 }}>
             {periodLabel} {institutionLabel ? `\u2022 ${institutionLabel}` : ''}
           </p>
           <p style={{ fontSize: '0.75rem', ...s.small, marginTop: '0.25rem', marginBottom: 0 }}>

@@ -179,18 +179,13 @@ const SettingItem = ({ icon, label, value, onClick, disabled = false }: {
       <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors shrink-0">
         {icon}
       </div>
-      <span className="font-bold text-slate-700 dark:text-slate-200 truncate">{label}</span>
+      <div className="min-w-0">
+        <div className="font-bold text-slate-700 dark:text-slate-200 truncate leading-tight">{label}</div>
+        {value && (
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate leading-tight mt-0.5">{value}</div>
+        )}
+      </div>
     </div>
-    {value && (
-      <div className="flex items-center gap-2 shrink-0 ml-2">
-        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[80px] lg:max-w-[120px]">{value}</span>
-        <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0" />
-      </div>
-    )}
-    {!value && (
-      <div className="flex items-center shrink-0 ml-2">
-        <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600" />
-      </div>
-    )}
+    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 ml-2" />
   </button>
 );

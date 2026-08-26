@@ -5,6 +5,7 @@ import { esFeriado } from '../../lib/feriados';
 import { computeGuardiaBreakdown } from '../../lib/guardiaBreakdown';
 import { parseAmount } from '../../lib/utils';
 import { translations, type Language } from '../../translations';
+import { createTransaction } from '../../lib/createTransaction';
 
 type ActivityMode = 'guardia' | 'extra';
 
@@ -316,7 +317,6 @@ export function useShiftForm(
           return {};
         }
 
-        const rawRate = parseAmount(formData.get('hourly_rate') as string || hourlyRate);
         const fDate = formData.get('date') as string || date;
         const fEndDate = formData.get('end_date') as string || endDate;
         const fStartTime = formData.get('start_time') as string || startTime;
@@ -324,23 +324,23 @@ export function useShiftForm(
         const fStatus = (formData.get('status') as string) === 'paid' ? PaymentStatus.PAID : PaymentStatus.PENDING;
         const fNotes = formData.get('notes') as string || notes;
 
-        // Source of truth for the amount is the RANGE (the backend computes by
-        // date+start_time → end_date+end_time). `duration` is derived from it
-        // when the range is complete so it can never disagree with the stored
-        // range; the `hours` input only drives the auto-computed end and is
-        // the fallback for range-less legacy records.
-        const fDuration = (fDate && fStartTime && fEndDate && fEndTime)
-          ? Math.max(0, Math.round(
-              (new Date(fEndDate + 'T' + fEndTime).getTime() - new Date(fDate + 'T' + fStartTime).getTime())
-              / (60 * 60 * 1000),
-            ))
-          : (parseInt(hours) || 0);
+        const guardiaPayload = createTransaction({
+          date: fDate,
+          endDate: fEndDate,
+          startTime: fStartTime,
+          endTime: fEndTime,
+          institution,
+          selectedInstitution,
+          hourlyRate: formData.get('hourly_rate') as string || hourlyRate,
+          status: fStatus,
+          notes: fNotes,
+          shiftSubtype,
+          hours,
+        });
 
         await onSubmit({
-          amount: cleanAmount, date: fDate, endDate: fEndDate,
-          startTime: fStartTime, endTime: fEndTime, institution,
-          type: ShiftType.ACTIVE, status: fStatus, notes: fNotes,
-          id: editingTransaction?.id, duration: fDuration, hourlyRate: rawRate, shiftSubtype,
+          ...guardiaPayload,
+          id: editingTransaction?.id,
         });
 
         for (const extra of extras) {

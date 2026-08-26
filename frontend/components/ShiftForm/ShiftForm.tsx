@@ -1,4 +1,4 @@
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ShiftType, Transaction, PaymentStatus, UserSettings, Institution } from '../../types';
 import { X, Check } from 'lucide-react';
 import { ActivaPasivaToggle } from '../ActivaPasivaToggle';
@@ -8,6 +8,8 @@ import { RateEditor } from '../RateEditor';
 import { GuardiaFields } from './GuardiaFields';
 import { ShiftModeToggle } from './ShiftModeToggle';
 import { useShiftForm } from './useShiftForm';
+import { useBulkShift } from './useBulkShift';
+import { BulkScheduler } from './BulkScheduler';
 import { cn, formatMoneyInput } from '../../lib/utils';
 import { translations } from '../../translations';
 import { Label } from '../ui/Label';
@@ -33,6 +35,41 @@ export function ShiftForm({
   const t = translations[settings.language];
   const isExtra = form.activityMode === 'extra';
 
+  const [bulkMode, setBulkMode] = useState(false);
+  const canBulk = !isExtra && !!form.institution && !editingTransaction;
+
+  const bulk = useBulkShift({
+    institution: form.institution,
+    language: settings.language,
+    onBulkSubmit: (tx) => Promise.resolve(onSubmit(tx)),
+    selectedInstitution: form.selectedInstitution,
+    hourlyRate: form.hourlyRate,
+    shiftSubtype: form.shiftSubtype,
+    status: form.status,
+    notes: form.notes,
+    hours: form.hours,
+    startTime: form.startTime,
+    endTime: form.endTime,
+  });
+
+  const generationStarted = useRef(false);
+
+  const handleBulkConfirm = useCallback(() => {
+    generationStarted.current = true;
+    bulk.generate();
+  }, [bulk]);
+
+  // Close modal when generation completes successfully (no error)
+  useEffect(() => {
+    if (generationStarted.current && !bulk.isGenerating) {
+      generationStarted.current = false;
+      if (!bulk.error) {
+        setBulkMode(false);
+        onClose();
+      }
+    }
+  }, [bulk.isGenerating, bulk.error, onClose]);
+
   const editLabel = editingTransaction
     ? (editingTransaction.type === ShiftType.ACTIVE ? t.editarGuardia
       : editingTransaction.type === ShiftType.CONSULTATION ? t.editarProcedimiento
@@ -41,14 +78,10 @@ export function ShiftForm({
       : t.editar)
     : t.nuevaActividad;
 
-  const handleBackdropClick = (e: ReactMouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
   return (
     <div
       className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-end lg:items-center justify-center animate-in fade-in duration-200"
-      onClick={handleBackdropClick}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="bg-white dark:bg-slate-900 w-full lg:max-w-xl max-h-[90vh] lg:max-h-[85vh] lg:rounded-t-3xl lg:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 lg:p-5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-10">
@@ -95,7 +128,30 @@ export function ShiftForm({
             <RateEditor institution={form.selectedInstitution} onInstitutionChange={onInstitutionChange} />
           )}
 
-          {isExtra ? (
+          {/* Bulk mode toggle — only for new guardias with an institution */}
+          {canBulk && (
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                data-testid="bulk-toggle"
+                checked={bulkMode}
+                onChange={(e) => setBulkMode(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-slate-700 dark:text-slate-200">
+                {t.programarGuardiasDelMes}
+              </span>
+            </label>
+          )}
+
+          {bulkMode && !isExtra && form.selectedInstitution && !editingTransaction ? (
+            <BulkScheduler
+              hook={bulk}
+              language={settings.language}
+              onConfirm={handleBulkConfirm}
+              onCancel={() => setBulkMode(false)}
+            />
+          ) : isExtra ? (
             /* Extra mode: manual amount + date */
             <>
               {/* Solo mostrar "Nombre del concepto" si es EXTRA nuevo o editando EXTRA */}
@@ -158,29 +214,34 @@ export function ShiftForm({
             />
           )}
 
-          <input type="hidden" name="institution" value={form.institution} />
-          <input type="hidden" name="status" value={form.status === PaymentStatus.PAID ? 'paid' : 'pending'} />
+          {/* Normal form fields (hidden when BulkScheduler is active) */}
+          {!bulkMode && (
+            <>
+              <input type="hidden" name="institution" value={form.institution} />
+              <input type="hidden" name="status" value={form.status === PaymentStatus.PAID ? 'paid' : 'pending'} />
 
-          {form.formState.error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-              <p className="text-sm text-red-700 dark:text-red-400">{form.formState.error}</p>
-            </div>
-          )}
+              {form.formState.error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <p className="text-sm text-red-700 dark:text-red-400">{form.formState.error}</p>
+                </div>
+              )}
 
-          <PaymentStatusToggle status={form.status} onChange={form.handleStatusToggle} language={settings.language} />
+              <PaymentStatusToggle status={form.status} onChange={form.handleStatusToggle} language={settings.language} />
 
-          <div className="space-y-2">
-            <Label>{t.notasOpcional}</Label>
-            <textarea name="notes" value={form.notes} onChange={(e) => form.setNotes(e.target.value)}
-              placeholder={t.observaciones} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-medium h-16 resize-none text-slate-900 dark:text-white" />
-          </div>
+              <div className="space-y-2">
+                <Label>{t.notasOpcional}</Label>
+                <textarea name="notes" value={form.notes} onChange={(e) => form.setNotes(e.target.value)}
+                  placeholder={t.observaciones} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl p-2.5 font-medium h-16 resize-none text-slate-900 dark:text-white" />
+              </div>
 
-          <button type="submit" disabled={isExtra ? (!form.conceptName || !form.amount || form.isPending) : (!form.institution || !form.amount || !!form.previewError || form.isPending)}
+              <button type="submit" disabled={isExtra ? (!form.conceptName || !form.amount || form.isPending) : (!form.institution || !form.amount || !!form.previewError || form.isPending)}
             className={cn("w-full lg:w-auto lg:px-10 lg:mx-auto p-3 rounded-xl font-bold text-base shadow-lg flex items-center justify-center gap-2 transition-all",
               (isExtra ? form.conceptName : form.institution) && form.amount && !form.isPending ? "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]" : "bg-slate-300 text-slate-500 cursor-not-allowed")}>
             <Check className="w-4 h-4" />
             {form.isPending ? t.guardando : isExtra ? t.guardarExtra : form.extras.length > 0 ? t.guardarActividades.replace('{count}', String(form.extras.length + 1)) : t.guardar}
-          </button>
+              </button>
+            </>
+          )}
         </form>
       </div>
     </div>

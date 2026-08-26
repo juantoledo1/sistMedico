@@ -9,6 +9,7 @@ import { ReportsPrintView } from './ReportsPrintView';
 import { ReportsFilterBar } from './ReportsFilterBar';
 import { ReportsStatsCards } from './ReportsStatsCards';
 import { useReportsFilters, ALL_INSTITUTIONS } from './useReportsFilters';
+import type { BulkPreset } from '../ShiftForm/useBulkShift';
 
 interface ReportsViewProps {
   transactions: Transaction[];
@@ -17,10 +18,11 @@ interface ReportsViewProps {
   profile: UserProfile;
   onBack: () => void;
   onOpenForm: (date?: string, tx?: Transaction) => void;
+  onReusePattern: (preset: BulkPreset) => void;
   onDelete: (id: string) => void;
 }
 
-export function ReportsView({ transactions, institutions, settings, profile, onBack, onOpenForm, onDelete }: ReportsViewProps) {
+export function ReportsView({ transactions, institutions, settings, profile, onBack, onOpenForm, onReusePattern, onDelete }: ReportsViewProps) {
   const t = translations[settings.language];
 
   const {
@@ -103,7 +105,7 @@ export function ReportsView({ transactions, institutions, settings, profile, onB
           <h3 className="text-lg font-black text-slate-900 dark:text-white">{t.calendarioActividades}</h3>
           <Button size="sm" onClick={() => onOpenForm()}>+ {t.registrar}</Button>
         </div>
-        <CalendarView transactions={transactions} institutions={institutions} onOpenForm={onOpenForm} onDelete={onDelete} settings={settings} embedded />
+        <CalendarView transactions={transactions} institutions={institutions} onOpenForm={onOpenForm} onDelete={onDelete} settings={settings} embedded onReusePattern={onReusePattern} />
       </Card>
 
       <button onClick={() => setShowPrintView(true)}

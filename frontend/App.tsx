@@ -16,9 +16,9 @@ import { SessionExpiredModal } from "./components/Settings/SessionExpiredModal";
 
 function App() {
   const {
-    auth, tx, activeView, isFormOpen, prefilledDate, editingTransaction,
+    auth, tx, activeView, isFormOpen, prefilledDate, editingTransaction, bulkPreset,
     insight, profile, isAdmin, settings, isLoading,
-    openForm, closeForm, handleViewChange,
+    openForm, openFormWithBulk, closeForm, handleViewChange,
     handleUpdateProfile, handleUpdateSettings,
   } = useAppState();
 
@@ -86,6 +86,7 @@ function App() {
               profile={profile}
               onBack={() => handleViewChange("inicio")}
               onOpenForm={(date, t) => openForm(date, t)}
+              onReusePattern={openFormWithBulk}
               onDelete={tx.handleDeleteTransaction}
             />
           )}
@@ -137,6 +138,7 @@ function App() {
           institutions={tx.institutions}
           onInstitutionChange={tx.handleInstitutionChange}
           onInstitutionDelete={tx.handleInstitutionDelete}
+          bulkPreset={bulkPreset}
         />
       )}
 

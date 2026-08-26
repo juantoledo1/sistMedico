@@ -5,6 +5,7 @@ import { loadCachedProfile, saveCachedProfile, profileFromApi, DEMO_PROFILE } fr
 import { useAuth } from './useAuth';
 import { useTransactions } from './useTransactions';
 import { useFinancialInsight } from './useFinancialInsight';
+import type { BulkPreset } from '../components/ShiftForm/useBulkShift';
 
 export type ViewState = "inicio" | "perfil" | "reportes" | "stats" | "admin" | "login" | "registro";
 
@@ -15,12 +16,14 @@ interface UseAppStateReturn {
   isFormOpen: boolean;
   prefilledDate: string | undefined;
   editingTransaction: Transaction | null;
+  bulkPreset: BulkPreset | undefined;
   insight: string;
   profile: UserProfile;
   isAdmin: boolean;
   settings: UserSettings;
   isLoading: boolean;
   openForm: (date?: string, txVal?: Transaction) => void;
+  openFormWithBulk: (preset: BulkPreset) => void;
   closeForm: () => void;
   handleViewChange: (view: string) => void;
   handleUpdateProfile: (p: Partial<UserProfile>) => Promise<void>;
@@ -32,6 +35,7 @@ export function useAppState(): UseAppStateReturn {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [prefilledDate, setPrefilledDate] = useState<string | undefined>();
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [bulkPresetState, setBulkPresetState] = useState<BulkPreset | undefined>();
   const [profile, setProfile] = useState<UserProfile>(() => loadCachedProfile() ?? DEMO_PROFILE);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -89,6 +93,14 @@ export function useAppState(): UseAppStateReturn {
   const openForm = (date?: string, txVal?: Transaction) => {
     setEditingTransaction(txVal || null);
     setPrefilledDate(date);
+    setBulkPresetState(undefined);
+    setIsFormOpen(true);
+  };
+
+  const openFormWithBulk = (preset: BulkPreset) => {
+    setEditingTransaction(null);
+    setPrefilledDate(undefined);
+    setBulkPresetState(preset);
     setIsFormOpen(true);
   };
 
@@ -96,6 +108,7 @@ export function useAppState(): UseAppStateReturn {
     setIsFormOpen(false);
     setPrefilledDate(undefined);
     setEditingTransaction(null);
+    setBulkPresetState(undefined);
   };
 
   const handleViewChange = (view: string) => {
@@ -117,9 +130,9 @@ export function useAppState(): UseAppStateReturn {
 
   return {
     auth, tx,
-    activeView, isFormOpen, prefilledDate, editingTransaction,
+    activeView, isFormOpen, prefilledDate, editingTransaction, bulkPreset: bulkPresetState,
     insight, profile, isAdmin, settings, isLoading,
-    openForm, closeForm, handleViewChange,
+    openForm, openFormWithBulk, closeForm, handleViewChange,
     handleUpdateProfile, handleUpdateSettings,
   };
 }

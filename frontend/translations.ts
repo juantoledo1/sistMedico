@@ -404,6 +404,9 @@ export const translations = {
     generandoGuardias: "Generando guardias...",
     guardiasGeneradas: "Se crearon {count} guardias",
     errorGeneracion: "Error al generar guardias",
+    // Scheduled patterns
+    guardiasProgramadas: "Guardias programadas este mes",
+    reutilizarPara: "Reutilizar para {month}",
   },
   en: {
     inicio: "Home",
@@ -809,6 +812,9 @@ export const translations = {
     generandoGuardias: "Generating shifts...",
     guardiasGeneradas: "Created {count} shifts",
     errorGeneracion: "Error generating shifts",
+    // Scheduled patterns
+    guardiasProgramadas: "Scheduled shifts this month",
+    reutilizarPara: "Reuse for {month}",
   }
 };
 

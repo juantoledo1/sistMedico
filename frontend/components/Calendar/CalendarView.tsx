@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { format, addMonths, subMonths } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
-import { Printer } from 'lucide-react';
+import { Printer, CalendarCheck } from 'lucide-react';
 import { Transaction, PaymentStatus, UserSettings, Institution } from '../../types';
 import { cn } from '../../lib/utils';
 import { translations } from '../../translations';
@@ -9,8 +9,12 @@ import { CalendarNav } from './CalendarNav';
 import { CalendarGrid } from './CalendarGrid';
 import { DayDetailsPanel } from './DayDetailsPanel';
 import { MobileDayModal } from './MobileDayModal';
+import { ScheduledPatterns } from './ScheduledPatterns';
 import { getShiftsForDay, findOverlaps } from './calendarUtils';
+import { useScheduledPatterns } from '../../hooks/useScheduledPatterns';
 import type { OverlapInfo } from './calendarUtils';
+import type { ScheduledPattern } from '../../hooks/useScheduledPatterns';
+import type { BulkPreset } from '../ShiftForm/useBulkShift';
 
 interface CalendarViewProps {
   transactions: Transaction[];
@@ -20,14 +24,36 @@ interface CalendarViewProps {
   settings: UserSettings;
   embedded?: boolean;
   onViewReports?: () => void;
+  onReusePattern?: (preset: BulkPreset) => void;
 }
 
-export function CalendarView({ transactions, institutions, onOpenForm, onDelete, settings, embedded, onViewReports }: CalendarViewProps) {
+export function CalendarView({ transactions, institutions, onOpenForm, onDelete, settings, embedded, onViewReports, onReusePattern }: CalendarViewProps) {
   const t = translations[settings.language];
   const locale = settings.language === 'es' ? es : enUS;
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [showDayModal, setShowDayModal] = useState(false);
+  const [showPatterns, setShowPatterns] = useState(false);
+
+  const patterns = useScheduledPatterns(transactions, currentDate);
+
+  const buildBulkPreset = useCallback((patternList: ScheduledPattern[]) => {
+    const days = [...new Set(patternList.map(p => p.dayOfWeek))];
+    const firstPattern = patternList[0];
+    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    const startDate = format(nextMonth, 'yyyy-MM-dd');
+    return {
+      selectedDays: days,
+      startTime: firstPattern.startTime,
+      endTime: firstPattern.endTime,
+      startDate,
+    };
+  }, [currentDate]);
+
+  const handleReuse = useCallback((patternList: ScheduledPattern[], _institution: string) => {
+    if (!onReusePattern) return;
+    onReusePattern(buildBulkPreset(patternList));
+  }, [onReusePattern, buildBulkPreset]);
 
   const selectedDayShifts = getShiftsForDay(selectedDay, transactions);
 
@@ -80,6 +106,25 @@ export function CalendarView({ transactions, institutions, onOpenForm, onDelete,
         onOpenForm={onOpenForm}
       />
 
+      {/* Scheduled patterns toggle — only when guardias exist this month */}
+      {patterns.length > 0 && onReusePattern && (
+        <div className="flex justify-end mb-4">
+          <button
+            type="button"
+            onClick={() => setShowPatterns(prev => !prev)}
+            className={cn(
+              'flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-all',
+              showPatterns
+                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700',
+            )}
+          >
+            <CalendarCheck className="w-4 h-4" />
+            {t.guardiasProgramadas}
+          </button>
+        </div>
+      )}
+
       {monthSummary.overlaps.length > 0 && (
         <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 mb-4 space-y-2">
           <p className="text-[10px] font-black text-red-600 uppercase tracking-wider">
@@ -126,6 +171,17 @@ export function CalendarView({ transactions, institutions, onOpenForm, onDelete,
           />
         </div>
       </div>
+
+      {/* Scheduled patterns panel */}
+      {showPatterns && onReusePattern && (
+        <div className="mt-6">
+          <ScheduledPatterns
+            patterns={patterns}
+            language={settings.language}
+            onReuse={handleReuse}
+          />
+        </div>
+      )}
 
       {showDayModal && (
         <MobileDayModal

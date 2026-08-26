@@ -13,6 +13,13 @@ export interface PreviewShift {
   holidayName: string | null;
 }
 
+export interface BulkPreset {
+  selectedDays: number[];
+  startTime: string;
+  endTime: string;
+  startDate: string;
+}
+
 export interface UseBulkShiftParams {
   institution: string;
   language: Language;
@@ -25,6 +32,7 @@ export interface UseBulkShiftParams {
   hours: string;
   startTime: string;
   endTime: string;
+  bulkPreset?: BulkPreset;
 }
 
 export interface UseBulkShiftReturn {
@@ -99,15 +107,17 @@ export function useBulkShift(params: UseBulkShiftParams): UseBulkShiftReturn {
     status,
     notes,
     hours,
+    bulkPreset,
   } = params;
 
   const t = translations[language];
 
   // ── State ──────────────────────────────────────────────────────
   const [selectedDays, setSelectedDays] = useState<Set<number>>(
-    () => new Set<number>(),
+    () => bulkPreset ? new Set(bulkPreset.selectedDays) : new Set<number>(),
   );
   const [startDate, setStartDate] = useState<string>(() => {
+    if (bulkPreset) return bulkPreset.startDate;
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   });
@@ -117,8 +127,8 @@ export function useBulkShift(params: UseBulkShiftParams): UseBulkShiftReturn {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState(params.startTime);
-  const [endTime, setEndTime] = useState(params.endTime);
+  const [startTime, setStartTime] = useState(bulkPreset?.startTime ?? params.startTime);
+  const [endTime, setEndTime] = useState(bulkPreset?.endTime ?? params.endTime);
 
   // ── Derived ────────────────────────────────────────────────────
   // previewShifts = all matching dates MINUS skipped holidays

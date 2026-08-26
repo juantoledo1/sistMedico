@@ -15,6 +15,8 @@ import { translations } from '../../translations';
 import { Label } from '../ui/Label';
 import { Input } from '../ui/Input';
 
+import type { BulkPreset } from './useBulkShift';
+
 interface ShiftFormProps {
   onClose: () => void;
   onSubmit: (tx: Partial<Transaction>) => void;
@@ -25,17 +27,18 @@ interface ShiftFormProps {
   institutions: Institution[];
   onInstitutionChange: (inst: Institution) => void;
   onInstitutionDelete: (id: string) => void;
+  bulkPreset?: BulkPreset;
 }
 
 export function ShiftForm({
   onClose, onSubmit, initialDate, editingTransaction,
-  transactions, settings, institutions, onInstitutionChange, onInstitutionDelete
+  transactions, settings, institutions, onInstitutionChange, onInstitutionDelete, bulkPreset
 }: ShiftFormProps) {
   const form = useShiftForm(onSubmit, editingTransaction, transactions, initialDate, institutions, onClose, settings.language);
   const t = translations[settings.language];
   const isExtra = form.activityMode === 'extra';
 
-  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkMode, setBulkMode] = useState(!!bulkPreset);
   const canBulk = !isExtra && !!form.institution && !editingTransaction;
 
   const bulk = useBulkShift({
@@ -50,6 +53,7 @@ export function ShiftForm({
     hours: form.hours,
     startTime: form.startTime,
     endTime: form.endTime,
+    bulkPreset,
   });
 
   const generationStarted = useRef(false);

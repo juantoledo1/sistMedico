@@ -89,30 +89,30 @@ function expectedPreviews(
 // ─── Weekday toggling ───────────────────────────────────────────
 
 describe('useBulkShift — weekday toggling', () => {
-  it('starts with all 7 days selected', () => {
+  it('starts with 0 days selected', () => {
     const h = renderHook(makeParams());
-    expect(h.getState().selectedDays.size).toBe(7);
+    expect(h.getState().selectedDays.size).toBe(0);
     for (let i = 0; i < 7; i++) {
-      expect(h.getState().selectedDays.has(i)).toBe(true);
+      expect(h.getState().selectedDays.has(i)).toBe(false);
     }
     h.unmount();
   });
 
-  it('toggleDay removes a day when it is selected', () => {
+  it('toggleDay adds a day when it is not selected', () => {
     const h = renderHook(makeParams());
     act(() => h.getState().toggleDay(1)); // Monday
-    expect(h.getState().selectedDays.has(1)).toBe(false);
-    expect(h.getState().selectedDays.size).toBe(6);
+    expect(h.getState().selectedDays.has(1)).toBe(true);
+    expect(h.getState().selectedDays.size).toBe(1);
     h.unmount();
   });
 
-  it('toggleDay adds a day back when it is not selected', () => {
+  it('toggleDay removes a day back when it is selected', () => {
     const h = renderHook(makeParams());
     act(() => h.getState().toggleDay(1));
-    expect(h.getState().selectedDays.has(1)).toBe(false);
-    act(() => h.getState().toggleDay(1));
     expect(h.getState().selectedDays.has(1)).toBe(true);
-    expect(h.getState().selectedDays.size).toBe(7);
+    act(() => h.getState().toggleDay(1));
+    expect(h.getState().selectedDays.has(1)).toBe(false);
+    expect(h.getState().selectedDays.size).toBe(0);
     h.unmount();
   });
 });
@@ -157,9 +157,8 @@ describe('useBulkShift — time and date setters', () => {
 describe('useBulkShift — previewShifts computation', () => {
   it('computes correct dates for selected weekdays in a month', () => {
     const h = renderHook(makeParams());
-    act(() => h.getState().toggleDay(0)); // deselect Sunday
-    act(() => h.getState().toggleDay(6)); // deselect Saturday
-    // Only weekdays (1–5) selected
+    // Select only weekdays (1–5)
+    for (let i = 1; i <= 5; i++) act(() => h.getState().toggleDay(i));
 
     const expected = expectedPreviews([1, 2, 3, 4, 5], 2026, 7); // Aug 2026
     expect(h.getState().previewShifts).toEqual(expected);
@@ -169,10 +168,8 @@ describe('useBulkShift — previewShifts computation', () => {
 
   it('computes correct dates for Saturday-only selection', () => {
     const h = renderHook(makeParams());
-    // Deselect all except Saturday (day 6)
-    for (let i = 0; i < 7; i++) {
-      if (i !== 6) act(() => h.getState().toggleDay(i));
-    }
+    // Select only Saturday (day 6)
+    act(() => h.getState().toggleDay(6));
     const expected = expectedPreviews([6], 2026, 7);
     expect(h.getState().previewShifts).toEqual(expected);
     expect(h.getState().previewShifts.length).toBeGreaterThan(0);
@@ -183,10 +180,8 @@ describe('useBulkShift — previewShifts computation', () => {
     // August 2026 has no national holidays, so test with May 2026 which has 2026-05-01 (Friday)
     const h = renderHook(makeParams());
     act(() => h.getState().setStartDate('2026-05-01'));
-    // Deselect all except Friday (day 5)
-    for (let i = 0; i < 7; i++) {
-      if (i !== 5) act(() => h.getState().toggleDay(i));
-    }
+    // Select only Friday (day 5)
+    act(() => h.getState().toggleDay(5));
 
     const previews = h.getState().previewShifts;
     expect(previews.length).toBeGreaterThan(0);
@@ -199,9 +194,7 @@ describe('useBulkShift — previewShifts computation', () => {
 
   it('returns empty preview when no days are selected', () => {
     const h = renderHook(makeParams());
-    for (let i = 0; i < 7; i++) {
-      act(() => h.getState().toggleDay(i));
-    }
+    // No days toggled — should be empty
     expect(h.getState().previewShifts).toEqual([]);
     h.unmount();
   });
@@ -229,10 +222,8 @@ describe('useBulkShift — holiday decisions', () => {
   it('skipped holidays are excluded from previewShifts', () => {
     const h = renderHook(makeParams());
     act(() => h.getState().setStartDate('2026-05-01'));
-    // Only Friday (5) selected — May 1 is a Friday holiday
-    for (let i = 0; i < 7; i++) {
-      if (i !== 5) act(() => h.getState().toggleDay(i));
-    }
+    // Select only Friday (5) — May 1 is a Friday holiday
+    act(() => h.getState().toggleDay(5));
 
     const beforeSkip = h.getState().previewShifts.length;
     act(() => h.getState().toggleHolidayDecision('2026-05-01'));
@@ -250,10 +241,8 @@ describe('useBulkShift — generate() calls onBulkSubmit sequentially', () => {
   it('calls onBulkSubmit for each confirmed shift', async () => {
     const onBulkSubmit = vi.fn(async () => {});
     const h = renderHook(makeParams({ onBulkSubmit }));
-    // Monday only for Aug 2026
-    for (let i = 0; i < 7; i++) {
-      if (i !== 1) act(() => h.getState().toggleDay(i));
-    }
+    // Select Monday only for Aug 2026
+    act(() => h.getState().toggleDay(1));
 
     const count = h.getState().previewShifts.length;
     expect(count).toBeGreaterThan(0);
@@ -270,10 +259,8 @@ describe('useBulkShift — generate() calls onBulkSubmit sequentially', () => {
     const onBulkSubmit = vi.fn(async () => {});
     const h = renderHook(makeParams({ onBulkSubmit }));
     act(() => h.getState().setStartDate('2026-05-01'));
-    // Only Friday (5) selected
-    for (let i = 0; i < 7; i++) {
-      if (i !== 5) act(() => h.getState().toggleDay(i));
-    }
+    // Select only Friday (5)
+    act(() => h.getState().toggleDay(5));
 
     const totalCount = h.getState().previewShifts.length;
     // Skip May 1 holiday
@@ -301,10 +288,8 @@ describe('useBulkShift — generate() calls onBulkSubmit sequentially', () => {
       () => new Promise<void>(resolve => { resolveSubmit = resolve; }),
     );
     const h = renderHook(makeParams({ onBulkSubmit }));
-    // Monday only
-    for (let i = 0; i < 7; i++) {
-      if (i !== 1) act(() => h.getState().toggleDay(i));
-    }
+    // Select Monday only
+    act(() => h.getState().toggleDay(1));
 
     const total = h.getState().previewShifts.length;
     expect(total).toBeGreaterThan(0);
@@ -349,10 +334,8 @@ describe('useBulkShift — generate() calls onBulkSubmit sequentially', () => {
       if (callCount === 2) throw new Error('API failure');
     });
     const h = renderHook(makeParams({ onBulkSubmit }));
-    // Monday only
-    for (let i = 0; i < 7; i++) {
-      if (i !== 1) act(() => h.getState().toggleDay(i));
-    }
+    // Select Monday only
+    act(() => h.getState().toggleDay(1));
 
     const total = h.getState().previewShifts.length;
     expect(total).toBeGreaterThan(2);
@@ -371,10 +354,7 @@ describe('useBulkShift — generate() calls onBulkSubmit sequentially', () => {
   it('does nothing when previewShifts is empty', async () => {
     const onBulkSubmit = vi.fn(async () => {});
     const h = renderHook(makeParams({ onBulkSubmit }));
-    // Deselect all days
-    for (let i = 0; i < 7; i++) {
-      act(() => h.getState().toggleDay(i));
-    }
+    // No days selected — preview should be empty
 
     await act(async () => {
       await h.getState().generate();

@@ -105,7 +105,7 @@ export function useBulkShift(params: UseBulkShiftParams): UseBulkShiftReturn {
 
   // ── State ──────────────────────────────────────────────────────
   const [selectedDays, setSelectedDays] = useState<Set<number>>(
-    () => new Set(ALL_DAYS),
+    () => new Set<number>(),
   );
   const [startDate, setStartDate] = useState<string>(() => {
     const now = new Date();
